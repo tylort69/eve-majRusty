@@ -961,6 +961,21 @@ mod tests {
         assert_eq!(c("[ ts ] (hint) blah"), None);
     }
 
+    /// Lines exactly as a current client (Nov 2026, under Proton) writes them.
+    #[test]
+    fn real_client_lines() {
+        let mut events = Vec::new();
+        let trackers = ActivityTrackers::default();
+        let mut sink = Sink { events: &mut events, trackers: &trackers };
+        let mut game = LogFile { character: "Some Pilot".into(), multiplier: 1, ..Default::default() };
+        game.process(b"[ 2026.11.16 20:01:37 ] (None) Jumping from ZZ-9TST to TST-01\r\n[ 2026.11.16 20:02:47 ] (None) Jumping from TST-01 to ZZ-9TST\r\n", &mut sink);
+        let mut chat = LogFile { character: "Some Pilot".into(), is_chatlog: true, multiplier: 1, ..Default::default() };
+        chat.process("\u{FEFF}[ 2026.11.16 20:01:41 ] EVE System > Channel changed to Local : TST-01\r\n".as_bytes(), &mut sink);
+        let system = |s: &str, jump| ChatlogEvent::System { character: "Some Pilot".into(), system: s.into(), event_ts: 0, is_jump: jump };
+        let jumped = |s: &str| ChatlogEvent::Notification { character: "Some Pilot".into(), text: format!("Jumped to {s}"), ntype: NotificationType::SystemChange };
+        assert_eq!(events, vec![jumped("TST-01"), system("TST-01", true), jumped("ZZ-9TST"), system("ZZ-9TST", true), system("TST-01", false)]);
+    }
+
     #[test]
     fn html_lines_classify_after_stripping() {
         let line = r#"[ 2026.11.16 19:11:00 ] (question) <a href="showinfo:1377//1">Bob</a> wants you to join their fleet, do you accept?"#;
