@@ -12,6 +12,27 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  privacy:
+    name: Commit emails are private
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check new commits use GitHub no-reply addresses
+        env:
+          BEFORE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          AFTER: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then range="$BEFORE..$AFTER"; else range="-1 $AFTER"; fi
+          bad=$(git log --format='%h %ae %ce' $range | awk '{for (i = 2; i <= 3; i++) if ($i !~ /(@users\.noreply\.github\.com|^noreply@github\.com)$/) print $1}' | sort -u)
+          if [ -n "$bad" ]; then
+            echo "::error::These commits carry an email that is not a GitHub no-reply address: $bad"
+            echo "Turn on 'Keep my email addresses private' in GitHub's email settings and recommit."
+            exit 1
+          fi
+          echo "All new commits use no-reply addresses."
+
   linux:
     name: Linux build and tests
     runs-on: ubuntu-24.04
