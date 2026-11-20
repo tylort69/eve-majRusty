@@ -1,6 +1,8 @@
+<p align="center"><img src="assets/logo.svg" width="128" height="128" alt="EVE-Maj Rusty logo"></p>
+
 # EVE-Maj Rusty
 
-A Rust port of [EVE-Maj Preview](https://github.com/1234nin4321/EveMajImproved), the lightweight tool that shows live
+A Rust port of [EVE-Maj Preview](https://github.com/mrmjstc/eve-maj-preview) by Mr Majestic, the lightweight tool that shows live
 thumbnail previews of EVE Online client windows: DWM thumbnails on Windows, and a native Wayland front end for
 [Hyprland](https://hyprland.org) on Linux. Profiles (`profiles/*.json`) use the same format as the Zig build, so an
 existing install's settings carry over.
@@ -67,6 +69,9 @@ itself first and then on `PATH`):
 ```sh
 install -Dm755 -t ~/.local/bin target/x86_64-unknown-linux-gnu/release/eve-maj-{preview,config}
 ```
+
+The app installs its icon (`assets/logo.svg`) into your icon theme as `eve-maj-preview` when it writes a desktop entry
+(the `evemajpreview://` handler or the autostart entry), so those entries show the logo.
 
 Start `eve-maj-preview` from your Hyprland config (`exec-once = eve-maj-preview`), or turn on Run on Startup in the
 settings window, which writes an XDG autostart entry (Hyprland runs those only through uwsm or a tool such as `dex`).

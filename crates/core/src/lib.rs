@@ -25,3 +25,5 @@ pub mod panels;
 pub mod render;
 pub mod hotkeys;
 pub mod chatlog;
+#[cfg(unix)]
+pub mod desktop_icon;

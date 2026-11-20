@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>EVE-Maj Preview</title>
+  <rect x="8" y="8" width="240" height="240" rx="60" fill="#1F1B16"/>
+  <rect x="9.5" y="9.5" width="237" height="237" rx="58.5" fill="none" stroke="#504539" stroke-width="3"/>
+  <rect x="100" y="47" width="56" height="26" rx="8" fill="#614E33"/>
+  <rect x="164" y="47" width="56" height="26" rx="8" fill="#614E33"/>
+  <rect x="36" y="81" width="56" height="26" rx="8" fill="#614E33"/>
+  <rect x="36" y="115" width="56" height="26" rx="8" fill="#614E33"/>
+  <rect x="100" y="115" width="56" height="26" rx="8" fill="#614E33"/>
+  <rect x="36" y="149" width="56" height="26" rx="8" fill="#614E33"/>
+  <rect x="36" y="183" width="56" height="26" rx="8" fill="#614E33"/>
+  <rect x="100" y="183" width="56" height="26" rx="8" fill="#614E33"/>
+  <rect x="164" y="183" width="56" height="26" rx="8" fill="#614E33"/>
+  <rect x="38" y="49" width="52" height="22" rx="6.5" fill="#2E2924" stroke="#F5BD62" stroke-width="4"/>
+  <path d="M48 55 L54 60 L48 65 M59 65 H68" fill="none" stroke="#F5BD62" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M208.4 126.4 L215.0 128.2 L213.0 138.3 L206.2 137.5 L204.7 139.9 L208.5 145.5 L200.5 151.9 L195.9 146.9 L193.1 147.8 L192.5 154.6 L182.2 154.4 L181.8 147.6 L179.2 146.5 L174.3 151.3 L166.6 144.5 L170.7 139.0 L169.4 136.5 L162.6 137.0 L161.0 126.8 L167.7 125.3 L168.2 122.5 L162.7 118.6 L168.1 109.8 L174.1 112.9 L176.4 111.1 L174.7 104.5 L184.5 101.2 L187.1 107.5 L190.0 107.6 L192.9 101.4 L202.5 105.2 L200.5 111.7 L202.6 113.6 L208.8 110.8 L213.7 119.9 L208.0 123.5 Z" fill="#E2773D" stroke="#E2773D" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="188" cy="128" r="8.5" fill="#1F1B16"/>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>EVE-Maj Preview</title>
+  <rect x="0" y="0" width="256" height="256" rx="64" fill="#1F1B16"/>
+  <rect x="94" y="43" width="68" height="32" rx="8" fill="#7A6340"/>
+  <rect x="158" y="43" width="68" height="32" rx="8" fill="#7A6340"/>
+  <rect x="30" y="77" width="68" height="32" rx="8" fill="#7A6340"/>
+  <rect x="30" y="111" width="68" height="32" rx="8" fill="#7A6340"/>
+  <rect x="94" y="111" width="68" height="32" rx="8" fill="#7A6340"/>
+  <rect x="30" y="145" width="68" height="32" rx="8" fill="#7A6340"/>
+  <rect x="30" y="179" width="68" height="32" rx="8" fill="#7A6340"/>
+  <rect x="94" y="179" width="68" height="32" rx="8" fill="#7A6340"/>
+  <rect x="158" y="179" width="68" height="32" rx="8" fill="#7A6340"/>
+  <rect x="30" y="43" width="68" height="32" rx="8" fill="#F5BD62"/>
+  <path d="M216.9 126.0 L226.0 128.3 L223.4 141.0 L214.2 139.5 L212.4 142.5 L217.9 150.1 L207.7 158.1 L201.6 151.1 L198.3 152.2 L197.6 161.5 L184.7 161.2 L184.5 151.8 L181.3 150.6 L174.8 157.3 L165.0 148.7 L170.9 141.4 L169.3 138.4 L160.0 139.4 L158.0 126.5 L167.2 124.8 L167.9 121.3 L160.1 116.1 L166.9 105.0 L175.1 109.6 L177.8 107.4 L175.2 98.4 L187.5 94.3 L190.9 103.0 L194.4 103.1 L198.2 94.6 L210.2 99.3 L207.2 108.2 L209.8 110.5 L218.2 106.4 L224.4 117.8 L216.4 122.6 Z" fill="#E2773D" stroke="#E2773D" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="192" cy="128" r="10" fill="#1F1B16"/>
+</svg>

@@ -6241,9 +6241,10 @@ let snakeGameActive = false;
 let snakeGameLoop = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    const asciiLogo = document.getElementById('ascii-logo');
-    if (asciiLogo) {
-        asciiLogo.addEventListener('click', handleAsciiClick);
+    // Five clicks on the About page's logo still open the snake game.
+    const aboutLogo = document.getElementById('about-logo');
+    if (aboutLogo) {
+        aboutLogo.addEventListener('click', handleAsciiClick);
     }
 });
 

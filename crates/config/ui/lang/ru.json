@@ -717,7 +717,7 @@
   "field.windowFiltersEnabled.hint": "Если выключено, отслеживаются только окна клиента EVE Online.",
   "field.windowFiltersEnabled.label": "Включить фильтры окон",
   "field.windowPositionSourceSelect.label": "Скопировать позицию из",
-  "misc.app-description": "Современный, лёгкий инструмент предпросмотра окон для EVE Online, написанный на Zig.",
+  "misc.app-description": "Современный, лёгкий инструмент предпросмотра окон для EVE Online, переписанный на Rust с нативной поддержкой Linux.",
   "misc.credits-inspired-by": "Во многом вдохновлён оригинальным EVE-O Preview и похожими инструментами.",
   "misc.credits-made-by": "Создано Mr Majestic для группы по интересам APM в Goonswarm.",
   "misc.document-title": "Настройки EVE-Maj Preview",

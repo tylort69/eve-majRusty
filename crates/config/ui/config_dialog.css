@@ -433,14 +433,6 @@ pre {
     font-size: 11px;
 }
 
-#ascii-logo {
-    cursor: pointer;
-    user-select: none;
-    font-size: 10px;
-    margin-bottom: 12px;
-    color: var(--md-primary);
-}
-
 .credits-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1146,18 +1138,51 @@ button:focus-visible {
 
 #app-brand-mark {
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
     width: 36px;
     height: 36px;
-    border-radius: var(--md-shape-md);
-    background: var(--md-primary-container);
-    color: var(--md-on-primary-container);
 }
 
-#app-brand-mark svg {
-    width: 22px;
-    height: 22px;
+#app-brand-mark .app-logo {
+    width: 100%;
+    height: 100%;
+}
+
+/* The app logo, drawn in the active theme's roles (a Material You "themed icon"): an E built from thumbnail tiles,
+   its first tile outlined as the active client with a shell prompt for Linux, and a cog (the Rust rewrite) finishing
+   the middle bar in a fixed oxide orange. assets/logo.svg is the same drawing in the stock theme's colors, which is
+   what these roles resolve to under the Default theme. */
+.app-logo .lm-bg, .app-logo .lm-hole { fill: var(--md-surface-container-low); }
+.app-logo .lm-ring { fill: none; stroke: var(--md-outline-variant); stroke-width: 3; }
+.app-logo .lm-tile { fill: var(--md-secondary-container-hover); }
+.app-logo .lm-active { fill: var(--md-surface-container-high); stroke: var(--md-primary); stroke-width: 4; }
+.app-logo .lm-prompt { fill: none; stroke: var(--md-primary); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.app-logo .lm-cog { fill: #E2773D; stroke: #E2773D; stroke-width: 2.5; stroke-linejoin: round; }
+
+.about-hero {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+}
+
+#about-logo {
+    flex: none;
+    width: 96px;
+    height: 96px;
+    cursor: pointer;
+}
+
+#about-logo .app-logo {
+    width: 100%;
+    height: 100%;
+}
+
+.about-hero-text h3 {
+    margin: 0 0 var(--space-1);
+    font-size: var(--fs-title-lg);
+}
+
+.about-hero-text .hint {
+    margin: 0;
 }
 
 #profile-header-sep {

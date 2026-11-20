@@ -717,7 +717,7 @@
   "field.windowFiltersEnabled.hint": "Wenn deaktiviert, werden nur EVE Online-Client-Fenster erfasst.",
   "field.windowFiltersEnabled.label": "Fensterfilter aktivieren",
   "field.windowPositionSourceSelect.label": "Position kopieren von",
-  "misc.app-description": "Ein modernes, schlankes Fenster-Vorschautool für EVE Online, entwickelt mit Zig.",
+  "misc.app-description": "Ein modernes, schlankes Fenster-Vorschautool für EVE Online, neu geschrieben in Rust mit nativer Linux-Unterstützung.",
   "misc.credits-inspired-by": "Stark inspiriert vom ursprünglichen EVE-O Preview und verwandten Tools.",
   "misc.credits-made-by": "Erstellt von Mr Majestic für die APM Special Interest Group in Goonswarm.",
   "misc.document-title": "EVE-Maj Preview Konfiguration",

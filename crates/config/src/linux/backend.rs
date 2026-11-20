@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 
 use eve_maj_core::config::{self, clamp_profile_name, parse_hex_color, profile_path, Config, GlobalSettings, Position, DEFAULT_ORE_TABLE, PROFILES_DIR};
+use eve_maj_core::desktop_icon;
 use eve_maj_core::display_info::{self, Display};
 use eve_maj_core::log::Scope;
 use eve_maj_core::protocol::{region_select_result_path, Command, RegionSelectRequest, RegionSelectResult, WireMessage};
@@ -378,7 +379,14 @@ fn apply_run_on_startup(enabled: bool) {
         return;
     }
     let Some(exe) = std::env::current_exe().ok().and_then(|e| e.parent().map(|d| d.join("eve-maj-preview"))) else { return };
-    let contents = format!("[Desktop Entry]\nType=Application\nName=EVE-Maj Preview\nExec={}\nTerminal=false\nX-GNOME-Autostart-enabled=true\n", exe.display());
+    if let Err(e) = desktop_icon::install() {
+        SLOG.warn(format_args!("Couldn't install the app icon: {e}"));
+    }
+    let contents = format!(
+        "[Desktop Entry]\nType=Application\nName=EVE-Maj Preview\nExec={}\nIcon={}\nTerminal=false\nX-GNOME-Autostart-enabled=true\n",
+        exe.display(),
+        desktop_icon::ICON_NAME
+    );
     if let Err(e) = std::fs::create_dir_all(&dir).and_then(|_| std::fs::write(&file, contents)) {
         SLOG.warn(format_args!("Couldn't write {}: {e}", file.display()));
     }

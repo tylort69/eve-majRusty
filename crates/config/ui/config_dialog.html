@@ -19,7 +19,7 @@
     <div id="window-container">
         <div id="profile-header">
             <div id="profile-header-left">
-                <span id="app-brand"><span id="app-brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="7.5" height="6" rx="1.5"/><rect x="13" y="5" width="7.5" height="6" rx="1.5"/><rect x="3.5" y="13" width="7.5" height="6" rx="1.5"/><rect x="13" y="13" width="7.5" height="6" rx="1.5" fill="currentColor"/></svg></span>EVE-Maj Preview</span>
+                <span id="app-brand"><span id="app-brand-mark"><svg class="app-logo" viewBox="8 8 240 240" aria-hidden="true"><rect x="8" y="8" width="240" height="240" rx="60" class="lm-bg"/><rect x="9.5" y="9.5" width="237" height="237" rx="58.5" class="lm-ring"/><rect x="100" y="47" width="56" height="26" rx="8" class="lm-tile"/><rect x="164" y="47" width="56" height="26" rx="8" class="lm-tile"/><rect x="36" y="81" width="56" height="26" rx="8" class="lm-tile"/><rect x="36" y="115" width="56" height="26" rx="8" class="lm-tile"/><rect x="100" y="115" width="56" height="26" rx="8" class="lm-tile"/><rect x="36" y="149" width="56" height="26" rx="8" class="lm-tile"/><rect x="36" y="183" width="56" height="26" rx="8" class="lm-tile"/><rect x="100" y="183" width="56" height="26" rx="8" class="lm-tile"/><rect x="164" y="183" width="56" height="26" rx="8" class="lm-tile"/><rect x="38" y="49" width="52" height="22" rx="6.5" class="lm-active"/><path d="M48 55 L54 60 L48 65 M59 65 H68" class="lm-prompt"/><path d="M208.4 126.4 L215.0 128.2 L213.0 138.3 L206.2 137.5 L204.7 139.9 L208.5 145.5 L200.5 151.9 L195.9 146.9 L193.1 147.8 L192.5 154.6 L182.2 154.4 L181.8 147.6 L179.2 146.5 L174.3 151.3 L166.6 144.5 L170.7 139.0 L169.4 136.5 L162.6 137.0 L161.0 126.8 L167.7 125.3 L168.2 122.5 L162.7 118.6 L168.1 109.8 L174.1 112.9 L176.4 111.1 L174.7 104.5 L184.5 101.2 L187.1 107.5 L190.0 107.6 L192.9 101.4 L202.5 105.2 L200.5 111.7 L202.6 113.6 L208.8 110.8 L213.7 119.9 L208.0 123.5 Z" class="lm-cog"/><circle cx="188" cy="128" r="8.5" class="lm-hole"/></svg></span>EVE-Maj Preview</span>
                 <span id="profile-header-sep"></span>
                 <select id="profile-select" onchange="switchProfile()">
                     <option value="default.json" data-i18n="common.defaultProfileLabel">default</option>
@@ -2389,7 +2389,7 @@
                             <input type="checkbox" id="autoRegisterProtocol">
                             <span class="label-body" data-i18n="field.autoRegisterProtocol.label">Auto-Register Protocol Handler</span>
                         </label>
-                        <p class="hint hint-extra"><span data-i18n="field.autoRegisterProtocol.hint">Needed once for links like evemajpreview://cycle-next to work from other apps.</span> <a href="https://github.com/mrmjstc/eve-maj-preview/blob/main/docs/CONFIGURATION.md#protocol-handler" onclick="return openExternalLink(event)" class="external-link">Learn more</a></p>
+                        <p class="hint hint-extra"><span data-i18n="field.autoRegisterProtocol.hint">Needed once for links like evemajpreview://cycle-next to work from other apps.</span> <a href="https://github.com/tylort69/eve-majRusty#linux-hyprland" onclick="return openExternalLink(event)" class="external-link">Learn more</a></p>
                         <label>
                             <input type="checkbox" id="disableUpdateChecksToggle">
                             <span class="label-body" data-i18n="field.disableUpdateChecksToggle.label">Disable Update Checks</span>
@@ -2490,17 +2490,13 @@
 
                 <div class="panel-content" data-panel="about">
                     <div class="section">
-                        <pre id="ascii-logo">
- _______     _______      __  __        _   ____                 _               
-| ____\ \   / / ____|    |  \/  | __ _ (_) |  _ \ _ __ _____   _(_) _____      __
-|  _|  \ \ / /|  _| _____| |\/| |/ _` || | | |_) | '__/ _ \ \ / / |/ _ \ \ /\ / /
-| |___  \ V / | |__|_____| |  | | (_| || | |  __/| | |  __/\ V /| |  __/\ V  V / 
-|_____|  \_/  |_____|    |_|  |_|\__,_|/ | |_|   |_|  \___| \_/ |_|\___| \_/\_/  
-                                      |__/                                        </pre>
-                        <div class="section-heading">
-                            <h3 data-i18n="tab.about.section.app-name.heading">EVE-Maj Preview</h3>
+                        <div class="about-hero">
+                            <div id="about-logo"><svg class="app-logo" viewBox="8 8 240 240" aria-hidden="true"><rect x="8" y="8" width="240" height="240" rx="60" class="lm-bg"/><rect x="9.5" y="9.5" width="237" height="237" rx="58.5" class="lm-ring"/><rect x="100" y="47" width="56" height="26" rx="8" class="lm-tile"/><rect x="164" y="47" width="56" height="26" rx="8" class="lm-tile"/><rect x="36" y="81" width="56" height="26" rx="8" class="lm-tile"/><rect x="36" y="115" width="56" height="26" rx="8" class="lm-tile"/><rect x="100" y="115" width="56" height="26" rx="8" class="lm-tile"/><rect x="36" y="149" width="56" height="26" rx="8" class="lm-tile"/><rect x="36" y="183" width="56" height="26" rx="8" class="lm-tile"/><rect x="100" y="183" width="56" height="26" rx="8" class="lm-tile"/><rect x="164" y="183" width="56" height="26" rx="8" class="lm-tile"/><rect x="38" y="49" width="52" height="22" rx="6.5" class="lm-active"/><path d="M48 55 L54 60 L48 65 M59 65 H68" class="lm-prompt"/><path d="M208.4 126.4 L215.0 128.2 L213.0 138.3 L206.2 137.5 L204.7 139.9 L208.5 145.5 L200.5 151.9 L195.9 146.9 L193.1 147.8 L192.5 154.6 L182.2 154.4 L181.8 147.6 L179.2 146.5 L174.3 151.3 L166.6 144.5 L170.7 139.0 L169.4 136.5 L162.6 137.0 L161.0 126.8 L167.7 125.3 L168.2 122.5 L162.7 118.6 L168.1 109.8 L174.1 112.9 L176.4 111.1 L174.7 104.5 L184.5 101.2 L187.1 107.5 L190.0 107.6 L192.9 101.4 L202.5 105.2 L200.5 111.7 L202.6 113.6 L208.8 110.8 L213.7 119.9 L208.0 123.5 Z" class="lm-cog"/><circle cx="188" cy="128" r="8.5" class="lm-hole"/></svg></div>
+                            <div class="about-hero-text">
+                                <h3 data-i18n="tab.about.section.app-name.heading">EVE-Maj Preview</h3>
+                                <p class="hint" data-i18n="misc.app-description">A modern, lightweight window preview tool for EVE Online, rewritten in Rust with native Linux support.</p>
+                            </div>
                         </div>
-                        <p class="hint" data-i18n="misc.app-description">A modern, lightweight window preview tool for EVE Online, built with Zig.</p>
 
                         <div style="margin: 12px 0;">
                             <p class="hint"><strong data-i18n="misc.version-label">Version:</strong> <span id="app-version">0.0.2</span></p>

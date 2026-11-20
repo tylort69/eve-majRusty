@@ -717,7 +717,7 @@
   "field.windowFiltersEnabled.hint": "关闭时,仅追踪 EVE Online 客户端窗口。",
   "field.windowFiltersEnabled.label": "启用窗口过滤器",
   "field.windowPositionSourceSelect.label": "从…复制位置",
-  "misc.app-description": "一款使用 Zig 构建的现代轻量级 EVE Online 窗口预览工具。",
+  "misc.app-description": "一款现代轻量级 EVE Online 窗口预览工具，使用 Rust 重写，原生支持 Linux。",
   "misc.credits-inspired-by": "深受初代 EVE-O Preview 及相关工具的启发。",
   "misc.credits-made-by": "由 Mr Majestic 为 Goonswarm 中的 APM 兴趣小组制作。",
   "misc.document-title": "EVE-Maj Preview 配置",

@@ -717,7 +717,7 @@
   "field.windowFiltersEnabled.hint": "Gdy wyłączone, śledzone są tylko okna klienta EVE Online.",
   "field.windowFiltersEnabled.label": "Włącz filtry okien",
   "field.windowPositionSourceSelect.label": "Kopiuj pozycję z",
-  "misc.app-description": "Nowoczesne, lekkie narzędzie do podglądu okien dla EVE Online, zbudowane w Zig.",
+  "misc.app-description": "Nowoczesne, lekkie narzędzie do podglądu okien dla EVE Online, przepisane w Rust z natywną obsługą Linuksa.",
   "misc.credits-inspired-by": "Mocno zainspirowane oryginalnym EVE-O Preview i podobnymi narzędziami.",
   "misc.credits-made-by": "Stworzone przez Mr Majestic dla grupy zainteresowań APM w Goonswarm.",
   "misc.document-title": "Konfiguracja EVE-Maj Preview",

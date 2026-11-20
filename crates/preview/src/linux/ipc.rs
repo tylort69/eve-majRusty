@@ -9,6 +9,7 @@ use std::os::fd::{AsRawFd, RawFd};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::PathBuf;
 
+use eve_maj_core::desktop_icon;
 use eve_maj_core::log::Scope;
 
 const SLOG: Scope = Scope::new("ipc");
@@ -125,8 +126,12 @@ pub fn register_protocol_handler() {
     let exe_str = exe.display().to_string();
     let exec = if exe_str.contains(char::is_whitespace) { format!("\"{exe_str}\"") } else { exe_str };
     let contents = format!(
-        "[Desktop Entry]\nType=Application\nName=EVE-Maj Preview\nComment=Live thumbnails of EVE Online clients\nExec={exec} --protocol %u\nIcon=eve-maj-preview\nTerminal=false\nNoDisplay=true\nMimeType=x-scheme-handler/{SCHEME};\n"
+        "[Desktop Entry]\nType=Application\nName=EVE-Maj Preview\nComment=Live thumbnails of EVE Online clients\nExec={exec} --protocol %u\nIcon={}\nTerminal=false\nNoDisplay=true\nMimeType=x-scheme-handler/{SCHEME};\n",
+        desktop_icon::ICON_NAME
     );
+    if let Err(e) = desktop_icon::install() {
+        SLOG.warn(format_args!("Couldn't install the app icon: {e}"));
+    }
     let dir = applications_dir();
     let path = dir.join(DESKTOP_FILE);
     if std::fs::read_to_string(&path).ok().as_deref() == Some(contents.as_str()) {
