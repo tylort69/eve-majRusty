@@ -275,7 +275,8 @@ pub fn handle_menu_command(command_id: u16) -> bool {
             }
         }
         IDM_TOGGLE_NOTIF_HISTORY => {
-            SLOG.warn(format_args!("The History Panel is not available in this build yet"));
+            SLOG.info(format_args!("Toggle History Panel requested from system tray"));
+            crate::panels::toggle_history();
         }
         IDM_CLEAR_NOTIF_HISTORY => {
             SLOG.info(format_args!("Clear notification history requested from system tray"));
@@ -291,14 +292,8 @@ pub fn handle_menu_command(command_id: u16) -> bool {
         }
         IDM_RESTORE_SAVED_POSITIONS => {
             SLOG.info(format_args!("Restore saved positions requested from system tray"));
-            match globals::hotkey_manager() {
-                Some(hkm) => hkm.handle_move_to_saved_positions_request(),
-                // Not in the Zig build (which always had a hotkey manager): do the move directly until hotkeys are ported.
-                None => {
-                    if let Some(scout) = globals::scout() {
-                        manager::move_all_clients_to_saved_positions(&scout.windows, config);
-                    }
-                }
+            if let Some(scout) = globals::scout() {
+                manager::move_all_clients_to_saved_positions(&scout.windows, config);
             }
         }
         IDM_CLOSE_ALL_CLIENTS => {
@@ -316,17 +311,23 @@ pub fn handle_menu_command(command_id: u16) -> bool {
             let index = (id - IDM_PROFILE_BASE) as usize;
             let Some(selected) = PROFILE_LIST_CACHE.with(|c| c.borrow().get(index).cloned()) else { return false };
             SLOG.info(format_args!("Profile selected from menu: {selected}"));
-            PENDING_PROFILE_NAME.with(|p| *p.borrow_mut() = Some(selected));
-            match globals::timer_hwnd() {
-                Some(hwnd) => unsafe {
-                    PostMessageW(hwnd, WM_SWITCH_PROFILE, 0, 0);
-                },
-                None => SLOG.err(format_args!("Timer window not available for profile switch")),
-            }
+            request_profile_switch(selected);
         }
         _ => return false,
     }
     true
+}
+
+/// Switches profile from the timer window's message loop (WM_SWITCH_PROFILE), never from inside a menu or hotkey handler
+/// that the reload's teardown would pull out from under.
+pub fn request_profile_switch(profile_name: String) {
+    PENDING_PROFILE_NAME.with(|p| *p.borrow_mut() = Some(profile_name));
+    match globals::timer_hwnd() {
+        Some(hwnd) => unsafe {
+            PostMessageW(hwnd, WM_SWITCH_PROFILE, 0, 0);
+        },
+        None => SLOG.err(format_args!("Timer window not available for profile switch")),
+    }
 }
 
 /// Launch config.exe, which is installed alongside the main executable
@@ -335,13 +336,12 @@ fn open_config_dialog() {
         SLOG.err(format_args!("Failed to determine executable directory"));
         return;
     };
-    let config_exe = exe_dir.join("config.exe");
-    // The Rust build doesn't ship its own config.exe yet, so a missing one is the common case; say what to do instead of failing silently.
-    if !config_exe.exists() {
-        SLOG.err(format_args!("config.exe not found at {}", config_exe.display()));
+    // config.exe in a release zip; eve-maj-config.exe straight out of cargo.
+    let Some(config_exe) = ["config.exe", "eve-maj-config.exe"].iter().map(|n| exe_dir.join(n)).find(|p| p.exists()) else {
+        SLOG.err(format_args!("config.exe not found in {}", exe_dir.display()));
         let body = wide(&format!(
-            "config.exe was not found next to eve-maj-preview.exe:\n{}\n\nThis Rust build doesn't include its own settings window yet. Copy config.exe and WebView2Loader.dll from your existing EVE-Maj Preview install into this folder; they work with this build.",
-            config_exe.display()
+            "The settings window (config.exe) was not found next to eve-maj-preview.exe in:\n{}\n\nExtract the whole release zip into one folder and try again.",
+            exe_dir.display()
         ));
         let title = wide("EVE-Maj Preview");
         // Own thread, so the modal box neither blocks nor re-enters the tray's message loop.
@@ -349,7 +349,7 @@ fn open_config_dialog() {
             MessageBoxW(std::ptr::null_mut(), body.as_ptr(), title.as_ptr(), MB_OK | MB_ICONINFORMATION | MB_TOPMOST | MB_SETFOREGROUND);
         });
         return;
-    }
+    };
     SLOG.info(format_args!("Launching configuration dialog: {}", config_exe.display()));
     if !shell::shell_open(&config_exe.to_string_lossy(), Some(&exe_dir.to_string_lossy())) {
         SLOG.err(format_args!("Failed to launch config.exe"));

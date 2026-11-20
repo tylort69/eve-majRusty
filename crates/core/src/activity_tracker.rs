@@ -1436,3 +1436,24 @@ mod tests {
         assert_eq!(t.get_isk_rate("Y"), Some(0.0));
     }
 }
+
+/// The process id in a "\GPU Process Memory(*)" counter instance name ("pid_1234_luid_0x0_0xABCD_phys_0"); None when
+/// there's no "pid_<N>" or N overflows a u32. Used by the Windows resource overlay's VRAM sampling.
+pub fn parse_gpu_instance_pid(name: &str) -> Option<u32> {
+    let rest = &name[name.find("pid_")? + 4..];
+    let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+    rest[..digits].parse().ok()
+}
+
+#[cfg(test)]
+mod gpu_instance_tests {
+    use super::parse_gpu_instance_pid;
+
+    #[test]
+    fn reads_the_pid_and_rejects_names_without_one() {
+        assert_eq!(parse_gpu_instance_pid("pid_1234_luid_0x0_0xABCD_phys_0"), Some(1234));
+        assert_eq!(parse_gpu_instance_pid("luid_0x0_0xABCD_phys_0"), None);
+        assert_eq!(parse_gpu_instance_pid("pid__luid_0x0"), None);
+        assert_eq!(parse_gpu_instance_pid("pid_99999999999_luid_0x0"), None);
+    }
+}

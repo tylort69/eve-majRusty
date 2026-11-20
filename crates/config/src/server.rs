@@ -40,8 +40,15 @@ pub struct Server {
 
 fn random_token() -> String {
     let mut bytes = [0u8; 16];
-    if let Ok(mut f) = std::fs::File::open("/dev/urandom") {
-        let _ = f.read_exact(&mut bytes);
+    let from_urandom = std::fs::File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut bytes)).is_ok();
+    if !from_urandom {
+        // Windows has no /dev/urandom; std's RandomState keys come from the OS generator (ProcessPrng/BCryptGenRandom).
+        use std::hash::{BuildHasher, Hasher};
+        for (i, chunk) in bytes.chunks_mut(8).enumerate() {
+            let mut h = std::collections::hash_map::RandomState::new().build_hasher();
+            h.write_usize(i);
+            chunk.copy_from_slice(&h.finish().to_le_bytes()[..chunk.len()]);
+        }
     }
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }

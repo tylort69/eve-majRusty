@@ -2,6 +2,31 @@
 
 All notable changes to EVE-Maj Rusty.
 
+## Unreleased
+
+### Linux
+- The Client List and History Panel are redesigned to match the settings window: rounded Material 3 cards, a titled
+  header with a client count, pill highlights for the focused and alerting clients, softer stat colors, and filter
+  chips. They follow the theme picked in Preferences, and change with it while the app runs.
+
+### Windows
+The Windows build reaches feature parity with Linux, and releases now include a portable Windows zip.
+- Hotkeys and hotkey groups: every binding in the profile and global settings, mouse-button and wheel hotkeys,
+  suspend/resume, profile switching, app and URL hotkeys, and `evemajpreview://hotkey/...` links.
+- Chat-log and game-log monitoring: system names, alerts with their sounds and text-to-speech, and Travel Mode.
+- DPS, mining, bounty and CPU/RAM/VRAM overlays, with the Taking Damage, Laser Idle and Mining Stopped alerts.
+- The Client List view and the notification History Panel, with dragging, snapping, saved positions and category
+  filters.
+- Region selection for layouts, from the settings window.
+- A Rust `config.exe`: the same settings window as on Linux, in WebView2, with the in-place updater, Identify
+  Displays and start-on-login.
+- `scripts/package-windows.sh` builds `eve-maj-rusty-<version>-windows-x86_64-portable.zip`, and the release workflow
+  attaches it to tagged releases. [docs/windows-testing.md](docs/windows-testing.md) is the test checklist.
+
+### Shared
+- The region-selection geometry and the settings window's backend now live in shared code used by both platforms;
+  Linux behaviour is unchanged.
+
 ## 2.0.0 - 2026-11-19
 
 First public release of EVE-Maj Rusty, a Rust rewrite of EVE-Maj Preview. The major version marks the new

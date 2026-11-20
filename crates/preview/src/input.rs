@@ -183,7 +183,18 @@ pub fn handle_thumbnail_shift_click(source_hwnd: HWND) {
         handle_thumbnail_click(source_hwnd);
         return;
     }
+    toggle_exclusion(painter, hotkey_manager, source_hwnd);
+}
 
+/// The toggle-exclusion hotkey: same as Shift+clicking the focused client's thumbnail, whatever enableShiftClickExclude says.
+pub fn handle_thumbnail_shift_click_forced(source_hwnd: HWND) {
+    let Some(painter) = globals::painter() else { return };
+    let Some(hotkey_manager) = globals::hotkey_manager() else { return };
+    toggle_exclusion(painter, hotkey_manager, source_hwnd);
+}
+
+fn toggle_exclusion(painter: &mut crate::painter::Painter, hotkey_manager: &mut crate::hotkeys::HotkeyManager, source_hwnd: HWND) {
+    let config = globals::config();
     let Some(i) = painter.index_by_source(source_hwnd) else { return };
     let char_name = painter.thumbnails[i].character_name.clone();
 

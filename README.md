@@ -4,7 +4,7 @@
 
 <p align="center">
   Live thumbnail previews of your EVE Online clients, with activity overlays, alerts and hotkeys.<br>
-  A Rust port of <a href="https://github.com/mrmjstc/eve-maj-preview">EVE-Maj Preview</a> with native Linux (Hyprland) support.
+  A Rust port of <a href="https://github.com/mrmjstc/eve-maj-preview">EVE-Maj Preview</a> for Linux (Hyprland) and Windows.
 </p>
 
 <p align="center">
@@ -25,7 +25,7 @@ systems and log lines are made up. No real game client, character or account is 
 - [Install on Linux (Hyprland)](#install-on-linux-hyprland)
 - [Using it](#using-it)
 - [The settings window](#the-settings-window)
-- [Building for Windows](#building-for-windows)
+- [Install or build on Windows](#install-or-build-on-windows)
 - [Project layout](#project-layout)
 - [Privacy](#privacy)
 - [Contributing, security and credits](#contributing-security-and-credits)
@@ -57,12 +57,14 @@ alert type can show a border, play a sound, speak through text-to-speech, and be
 
 ### Client List and History Panel
 
-![The compact Client List with one row per pilot and live stats, next to the Notification History panel with FLT/MIN/CBT/NAV/GEN filters](docs/screenshots/panels.png)
+![The Client List with one row per pilot, the focused one highlighted and two alerting, next to the Notifications panel with its FLT/MIN/CBT/NAV/GEN filter chips](docs/screenshots/panels.png)
 
 - **Client List** (left) is a compact alternative to thumbnails: one row per client, with a status dot and the newest
   alert, live stats or system name. It suits large fleets of clients. Click a row to focus that client.
 - **History Panel** (right) collects recent alerts from every character, with fleet, mining, combat, navigation and
   general filters. Click an entry to jump to that client.
+
+Both panels use the settings window's design and follow its theme (see below).
 
 ### Region selection for layouts
 
@@ -91,15 +93,15 @@ custom one from up to four hex or RGB colors. The app logo in the window follows
 |---|---|---|
 | Thumbnails, clicking, dragging, snapping, layouts | ✅ | ✅ |
 | Notifications, tray, profile switching | ✅ | ✅ |
-| Hotkeys and hotkey groups | ✅ | 🚧 not yet ported |
-| Chat-log monitoring, alerts, sounds, text-to-speech | ✅ | 🚧 not yet ported |
-| DPS, mining, bounty and CPU/RAM overlays | ✅ | 🚧 not yet ported |
-| Client List, History Panel, region selection | ✅ | 🚧 not yet ported |
-| Settings window | ✅ `eve-maj-config` | 🚧 `config.exe` not yet ported |
+| Hotkeys and hotkey groups | ✅ | ✅ |
+| Chat-log monitoring, alerts, sounds, text-to-speech | ✅ | ✅ |
+| DPS, mining, bounty and CPU/RAM overlays | ✅ | ✅ (plus VRAM) |
+| Client List, History Panel, region selection | ✅ | ✅ |
+| Settings window | ✅ `eve-maj-config` | ✅ `config.exe` |
 
-Linux is the primary platform of this port. On Windows, the original
-[EVE-Maj Preview](https://github.com/mrmjstc/eve-maj-preview) is still the complete option. Profiles use the same
-JSON format in both, so settings carry over. Unported settings still load and save, and log a warning when enabled.
+Linux is the primary platform of this port. The Windows build has every feature too, but it is newer and less
+tested; the original [EVE-Maj Preview](https://github.com/mrmjstc/eve-maj-preview) remains an option there. Profiles
+use the same JSON format in both, so settings carry over.
 
 ## Install on Linux (Hyprland)
 
@@ -236,18 +238,28 @@ Version, credits and licenses.
 
 </details>
 
-## Building for Windows
+## Install or build on Windows
 
-The Windows binaries cross-compile from Linux with MinGW (the repo's default build target):
+**Using it:** download `eve-maj-rusty-<version>-windows-x86_64-portable.zip` from the releases page, extract it to a
+folder you can write to (not Program Files), and run `eve-maj-preview.exe`. Open the settings from the tray icon.
+Profiles, global settings and `eve-maj.log` live in that folder, so you can copy the `profiles` folder over from an
+EVE-Maj Preview install. The settings window (`config.exe`, with `WebView2Loader.dll` beside it) needs the Microsoft
+Edge WebView2 Runtime, which Windows 11 includes and Edge installs on Windows 10. Updates can be installed from the
+settings window's Updates tab.
+
+**Building it:** the Windows binaries cross-compile from Linux with MinGW (the repo's default build target):
 
 ```sh
 rustup target add x86_64-pc-windows-gnu
-sudo apt install gcc-mingw-w64-x86-64   # provides the linker and windres
+sudo apt install gcc-mingw-w64-x86-64 zip   # the linker and windres; on Arch: pacman -S mingw-w64-gcc zip
 cargo build --release
+scripts/package-windows.sh v2.1.0           # dist/eve-maj-rusty-v2.1.0-windows-x86_64-portable.zip
 ```
 
-On Windows itself, `cargo build --release --target x86_64-pc-windows-gnu` (or `-msvc`) works the same way. Run the
-unit tests on a Linux host with `cargo t`.
+The package script renames `eve-maj-config.exe` to `config.exe` (the name the tray and the updater use) and adds
+`WebView2Loader.dll`. On Windows itself, `cargo build --release --target x86_64-pc-windows-gnu` works the same way.
+Run the unit tests on a Linux host with `cargo t`. [docs/windows-testing.md](docs/windows-testing.md) is the
+checklist for trying a Windows build.
 
 ## Project layout
 
@@ -255,7 +267,7 @@ unit tests on a Linux host with `cargo t`.
 |---|---|
 | `crates/core` | Platform-independent model: config, logging, protocol URLs, chat-log parsing, trackers, accounts, update checks. Unit-tested on any host. |
 | `crates/preview` | The `eve-maj-preview` binary: the Windows app (`src/*.rs`) and the Linux/Hyprland front end (`src/linux/`). |
-| `crates/config` | The `eve-maj-config` settings window for Linux: the settings page (`ui/`) in a WebKitGTK window. |
+| `crates/config` | The settings window: the settings page (`ui/`) and its backend (`src/backend.rs`), in a WebKitGTK window on Linux (`eve-maj-config`) and a WebView2 window on Windows (`config.exe`). |
 | `crates/app` | Windows subsystems: IPC, sound, text-to-speech, updater, displays, mouse hook. |
 | `crates/win` | Thin helpers over the Win32 API. |
 

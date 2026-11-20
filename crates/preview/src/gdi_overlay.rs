@@ -260,10 +260,11 @@ pub fn draw_button_face(bmp: &mut OverlayBitmap, rect: RECT, label: &str, font: 
 /// Draws a `thickness`-px outline of a rect placed anywhere inside a `buf_width`x`buf_height` pixel buffer, clamped to the buffer bounds.
 #[allow(clippy::too_many_arguments)]
 pub fn draw_rect_outline(pixels: &mut [u32], buf_width: usize, buf_height: usize, x: i32, y: i32, w: usize, h: usize, thickness: usize, color: u32) {
+    // Clip both edges, so a rect partly above or left of the buffer keeps its real right and bottom edges.
     let left = x.clamp(0, buf_width as i32) as usize;
     let top = y.clamp(0, buf_height as i32) as usize;
-    let right = buf_width.min(left + w);
-    let bottom = buf_height.min(top + h);
+    let right = (x as i64 + w as i64).clamp(0, buf_width as i64) as usize;
+    let bottom = (y as i64 + h as i64).clamp(0, buf_height as i64) as usize;
     if right <= left || bottom <= top {
         return;
     }
@@ -272,6 +273,39 @@ pub fn draw_rect_outline(pixels: &mut [u32], buf_width: usize, buf_height: usize
     fill_rect(pixels, buf_width, buf_height, left, bottom - t, right - left, t, color);
     fill_rect(pixels, buf_width, buf_height, left, top, t, bottom - top, color);
     fill_rect(pixels, buf_width, buf_height, right - t, top, t, bottom - top, color);
+}
+
+/// Like [`present_layered`], but with `dirty` set only that part of the bitmap is sent to the window (which must
+/// already have had one full frame at this size).
+pub fn present_layered_dirty(hwnd: HWND, bmp: &OverlayBitmap, opacity: u8, dirty: Option<&RECT>) {
+    let Some(dirty) = dirty else { return present_layered(hwnd, bmp, opacity) };
+    unsafe {
+        let screen_dc = GetDC(std::ptr::null_mut());
+        if screen_dc.is_null() {
+            SLOG.err(format_args!("Failed to get screen DC to present layered overlay"));
+            return;
+        }
+        let window_size = SIZE { cx: bmp.width as i32, cy: bmp.height as i32 };
+        let source_pos = POINT { x: 0, y: 0 };
+        let blend = BLENDFUNCTION { BlendOp: AC_SRC_OVER as u8, BlendFlags: 0, SourceConstantAlpha: opacity, AlphaFormat: AC_SRC_ALPHA as u8 };
+        let info = UPDATELAYEREDWINDOWINFO {
+            cbSize: std::mem::size_of::<UPDATELAYEREDWINDOWINFO>() as u32,
+            hdcDst: screen_dc,
+            pptDst: std::ptr::null(),
+            psize: &window_size,
+            hdcSrc: bmp.mem_dc,
+            pptSrc: &source_pos,
+            crKey: 0,
+            pblend: &blend,
+            dwFlags: ULW_ALPHA,
+            prcDirty: dirty,
+        };
+        if UpdateLayeredWindowIndirect(hwnd, &info) == 0 {
+            // Fall back to a full update rather than leaving a stale frame.
+            UpdateLayeredWindow(hwnd, screen_dc, std::ptr::null(), &window_size, bmp.mem_dc, &source_pos, 0, &blend, ULW_ALPHA);
+        }
+        ReleaseDC(std::ptr::null_mut(), screen_dc);
+    }
 }
 
 /// Pushes the bitmap to a layered window at its origin using per-pixel alpha, scaled by `opacity`.

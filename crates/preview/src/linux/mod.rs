@@ -559,6 +559,7 @@ impl App {
         }
         if self.tick % 20 == 5 {
             self.check_profile_reload();
+            self.check_panel_theme();
         }
         self.region_select_tick();
         self.expire_notifications();

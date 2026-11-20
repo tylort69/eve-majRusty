@@ -308,7 +308,7 @@ pub struct Painter {
     /// FIFO queue of recently-notified characters, oldest first; consumed by HotkeyManager::cycle_notified via notified_character_names.
     notified_queue: Vec<NotifiedCharacterEntry>,
     /// Thumbnails hide_thumbnails_for_region_select hid, so the restore only re-shows exactly those (not ones already manually hidden beforehand).
-    region_select_hidden_hwnds: Vec<HWND>,
+    pub region_select_hidden_hwnds: Vec<HWND>,
     pending_auto_moves: Vec<PendingAutoMove>,
     /// The last NOTIF_HISTORY_CAPACITY notifications shown, across all characters, oldest first.
     notification_history: std::collections::VecDeque<NotificationHistoryEntry>,
@@ -394,13 +394,6 @@ impl Painter {
             SLOG.err(format_args!("Failed to set up destroy event hook"));
         }
 
-        let display = &globals::config().display;
-        if display.view_mode == ViewMode::ClientList {
-            SLOG.warn(format_args!("Client List view is not available in this build yet; tracking clients without a list window"));
-        }
-        if display.show_notif_info_panel {
-            SLOG.warn(format_args!("The History Panel is not available in this build yet"));
-        }
         Ok(painter)
     }
 
@@ -1137,7 +1130,8 @@ impl Painter {
 
     /// Re-applies every thumbnail's on-screen position from the current display config, for config-dialog live preview and layout reflows; never touches startX/startY since those can be live-dragged in the running app.
     pub fn reposition_all_thumbnails(&mut self) {
-        let window_count = self.thumbnails.iter().filter(|t| t.win32_enabled).count() as i32 * 2;
+        let panels = crate::panels::hwnds();
+        let window_count = self.thumbnails.iter().filter(|t| t.win32_enabled).count() as i32 * 2 + panels.len() as i32;
         if window_count == 0 {
             return;
         }
@@ -1315,7 +1309,8 @@ impl Painter {
     /// Re-asserts HWND_TOPMOST z-order for all thumbnail/text windows when another app's topmost window steals it from us.
     fn reassert_topmost(&self) {
         // Batched so DWM applies the whole z-order change atomically, instead of compositing each intermediate SetWindowPos and flashing thumbnails.
-        let window_count = self.thumbnails.iter().filter(|t| t.win32_enabled).count() as i32 * 2;
+        let panels = crate::panels::hwnds();
+        let window_count = self.thumbnails.iter().filter(|t| t.win32_enabled).count() as i32 * 2 + panels.len() as i32;
         if window_count == 0 {
             return;
         }
@@ -1328,6 +1323,13 @@ impl Painter {
                     }
                     hdwp = DeferWindowPos(hdwp, h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
                 }
+            }
+            // The Client List and History Panel are always-on-top too.
+            for h in panels {
+                if hdwp.is_null() {
+                    return;
+                }
+                hdwp = DeferWindowPos(hdwp, h, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
             }
             if !hdwp.is_null() {
                 EndDeferWindowPos(hdwp);
@@ -1632,14 +1634,15 @@ impl Painter {
         self.thumbnails.iter().any(|t| !is_generic_character_name(&t.character_name))
     }
 
-    /// Whether the History Panel is on-screen; it isn't ported yet, so never.
+    /// Whether the History Panel is on-screen.
     pub fn is_notif_info_panel_visible(&self) -> bool {
-        false
+        crate::panels::history_visible()
     }
 
-    /// Resets the notification-history ring buffer; used by the tray menu's "Clear Notification History" action.
+    /// Resets the notification history; used by the tray menu's "Clear Notification History" action.
     pub fn clear_notification_history(&mut self) {
         self.notification_history.clear();
+        crate::panels::clear_history();
     }
 
     /// The notification history, newest first.
@@ -1662,11 +1665,14 @@ impl Painter {
         if self.notification_history.len() == NOTIF_HISTORY_CAPACITY {
             self.notification_history.pop_front();
         }
+        let text = clip(text, 96);
+        // The History Panel's buffer lives outside the painter, so a profile reload keeps it.
+        crate::panels::push_history(source_hwnd, &character_name, character_color, &text, notification_type);
         self.notification_history.push_back(NotificationHistoryEntry {
             source_hwnd,
             notification_type,
             character_name,
-            text: clip(text, 96),
+            text,
             timestamp: Ticks::now(),
             character_color,
         });
@@ -1896,9 +1902,9 @@ impl Painter {
         }
     }
 
-    /// Region selection (the config dialog's "Start Region Selection") isn't ported yet; logs and ignores the request.
-    pub fn start_region_select(&mut self, _request: &eve_maj_core::protocol::RegionSelectRequest) {
-        SLOG.warn(format_args!("Region selection is not available in this build yet"));
+    /// The config dialog's "Start Region Selection"; see region_select.
+    pub fn start_region_select(&mut self, request: &eve_maj_core::protocol::RegionSelectRequest) {
+        crate::region_select::start(request);
     }
 }
 
@@ -1979,7 +1985,9 @@ unsafe extern "system" fn win_event_proc(_: HWINEVENTHOOK, _: u32, hwnd: HWND, _
 
     // A newly-foregrounded topmost window gets inserted above ours in the z-order band; push back unless it's shell UI allowed to stay on top.
     let ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
-    if ex_style & WS_EX_TOPMOST as isize != 0 && !is_explorer_owned(hwnd) {
+    // Our own topmost windows (the region-select overlay, the panels) are left where they are: pushing the thumbnails
+    // above the region-select overlay would let them catch its clicks.
+    if ex_style & WS_EX_TOPMOST as isize != 0 && !is_explorer_owned(hwnd) && !is_own_process_window(hwnd) {
         painter.reassert_topmost();
     }
 

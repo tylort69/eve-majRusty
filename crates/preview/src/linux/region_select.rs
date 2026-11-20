@@ -8,6 +8,7 @@
 
 use eve_maj_core::log::Scope;
 use eve_maj_core::protocol::{self, label_text, Rect, RegionSelectRequest, RegionSelectResult};
+use eve_maj_core::region_select::{self as region, intersects, normalized, resized, Action, Button, Cursor, Hit, MIN_DRAG, TIMEOUT_MS};
 use eve_maj_core::render::now_ms;
 use wayland_client::protocol::wl_surface::WlSurface;
 use wayland_client::{Proxy, WEnum};
@@ -21,16 +22,8 @@ const SLOG: Scope = Scope::new("region-select");
 const NAMESPACE: &str = "eve-maj-region-select";
 /// Surface ids from here up are region-select surfaces (thumbnail ids count up from 1).
 pub(super) const SURFACE_ID_BASE: u64 = 1 << 62;
-/// The dialog gives up polling after two minutes; the overlay goes away then too.
-const TIMEOUT_MS: u64 = 120_000;
-/// How far from an edge (logical pixels) a press still grabs it.
-const EDGE_GRAB: i32 = 8;
-/// A drag shorter than this is a click, not a new rectangle.
-const MIN_DRAG: i32 = 4;
 const HANDLE: f64 = 8.0;
 const BUTTON_PAD_X: f64 = 16.0;
-const BUTTON_H: i32 = 32;
-const BUTTON_GAP: i32 = 8;
 const FONT: &str = "Sans";
 const FONT_PX: i32 = 15;
 const ACCENT: (f64, f64, f64) = (0.24, 0.68, 0.91);
@@ -41,38 +34,6 @@ const KEY_ENTER: u32 = 28;
 const KEY_KPENTER: u32 = 96;
 const BTN_LEFT: u32 = 0x110;
 const BTN_RIGHT: u32 = 0x111;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Button {
-    Save,
-    Cancel,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-struct Edges {
-    left: bool,
-    top: bool,
-    right: bool,
-    bottom: bool,
-}
-
-/// What a press at a point would do.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Hit {
-    Button(Button),
-    Resize(Edges),
-    Move,
-    Draw,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Action {
-    None,
-    Drawing { anchor: (i32, i32), previous: Option<Rect> },
-    Moving { grab: (i32, i32), orig: Rect },
-    Resizing { edges: Edges, grab: (i32, i32), orig: Rect },
-    Pressing(Button),
-}
 
 /// What one surface shows; it's repainted only when this changes.
 #[derive(Debug, Clone, PartialEq)]
@@ -121,49 +82,17 @@ impl RegionSelect {
         self.request.hide_thumbnails
     }
 
-    /// Save and Cancel, right-aligned under the rectangle, or inside its bottom edge when the monitor ends there.
     fn button_rects(&self, monitor: Option<Rect>) -> Option<(Rect, Rect)> {
-        let r = self.rect?;
-        let width = self.save_w + BUTTON_GAP + self.cancel_w;
-        let below = r.bottom + BUTTON_GAP;
-        let top = match monitor {
-            Some(m) if below + BUTTON_H > m.bottom => (r.bottom - BUTTON_GAP - BUTTON_H).max(r.top),
-            _ => below,
-        };
-        let mut left = r.right - width;
-        if let Some(m) = monitor {
-            left = left.clamp(m.left, (m.right - width).max(m.left));
-        }
-        let save = Rect { left, top, right: left + self.save_w, bottom: top + BUTTON_H };
-        let cancel = Rect { left: save.right + BUTTON_GAP, top, right: save.right + BUTTON_GAP + self.cancel_w, bottom: top + BUTTON_H };
-        Some((save, cancel))
+        region::button_rects(self.rect, self.save_w, self.cancel_w, monitor)
     }
 
     fn buttons_monitor(&self) -> Option<Rect> {
-        let r = self.rect?;
-        let (x, y) = (r.right - 1, r.bottom - 1);
-        let inside = |b: &Rect| x >= b.left && x < b.right && y >= b.top && y < b.bottom;
         let bounds: Vec<Rect> = self.surfaces.iter().map(|s| s.bounds).collect();
-        bounds.iter().copied().find(inside).or_else(|| {
-            bounds.iter().copied().min_by_key(|b| {
-                let dx = (b.left - x).max(0).max(x - b.right) as i64;
-                let dy = (b.top - y).max(0).max(y - b.bottom) as i64;
-                dx * dx + dy * dy
-            })
-        })
+        region::buttons_monitor(self.rect, &bounds)
     }
 
-    fn hit(&self, (x, y): (i32, i32)) -> Hit {
-        if let Some((save, cancel)) = self.button_rects(self.buttons_monitor()) {
-            if contains(save, x, y) {
-                return Hit::Button(Button::Save);
-            }
-            if contains(cancel, x, y) {
-                return Hit::Button(Button::Cancel);
-            }
-        }
-        let Some(r) = self.rect else { return Hit::Draw };
-        hit_rect(r, x, y)
+    fn hit(&self, p: (i32, i32)) -> Hit {
+        region::hit(self.rect, self.button_rects(self.buttons_monitor()), p)
     }
 
     fn scene_for(&self, s: &OverlaySurface, buttons: Option<(Rect, Rect)>) -> Scene {
@@ -175,67 +104,19 @@ impl RegionSelect {
     }
 }
 
-fn contains(r: Rect, x: i32, y: i32) -> bool {
-    x >= r.left && x < r.right && y >= r.top && y < r.bottom
-}
-
-fn intersects(a: Rect, b: Rect) -> bool {
-    a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
-}
-
-fn normalized((x0, y0): (i32, i32), (x1, y1): (i32, i32)) -> Rect {
-    Rect { left: x0.min(x1), top: y0.min(y1), right: x0.max(x1), bottom: y0.max(y1) }
-}
-
-fn hit_rect(r: Rect, x: i32, y: i32) -> Hit {
-    let in_x = x >= r.left - EDGE_GRAB && x <= r.right + EDGE_GRAB;
-    let in_y = y >= r.top - EDGE_GRAB && y <= r.bottom + EDGE_GRAB;
-    let edges = Edges {
-        left: in_y && (x - r.left).abs() <= EDGE_GRAB,
-        right: in_y && (x - r.right).abs() <= EDGE_GRAB,
-        top: in_x && (y - r.top).abs() <= EDGE_GRAB,
-        bottom: in_x && (y - r.bottom).abs() <= EDGE_GRAB,
-    };
-    // A rectangle thinner than the grab zone: prefer the far edges so it can still grow.
-    let edges = Edges { left: edges.left && !edges.right, top: edges.top && !edges.bottom, ..edges };
-    if edges != Edges::default() {
-        Hit::Resize(edges)
-    } else if contains(r, x, y) {
-        Hit::Move
-    } else {
-        Hit::Draw
-    }
-}
-
-/// `orig` with the grabbed edges moved by the pointer's travel; it flips over rather than inverting.
-fn resized(orig: Rect, edges: Edges, (dx, dy): (i32, i32)) -> Rect {
-    let mut r = orig;
-    if edges.left {
-        r.left += dx;
-    }
-    if edges.right {
-        r.right += dx;
-    }
-    if edges.top {
-        r.top += dy;
-    }
-    if edges.bottom {
-        r.bottom += dy;
-    }
-    normalized((r.left, r.top), (r.right, r.bottom))
-}
-
 fn cursor_for(hit: Hit) -> Shape {
-    match hit {
-        Hit::Button(_) => Shape::Pointer,
-        Hit::Move => Shape::Move,
-        Hit::Draw => Shape::Crosshair,
-        Hit::Resize(e) => match (e.left, e.top, e.right, e.bottom) {
-            (true, true, _, _) | (_, _, true, true) => Shape::NwseResize,
-            (true, _, _, true) | (_, true, true, _) => Shape::NeswResize,
-            (true, _, _, _) | (_, _, true, _) => Shape::EwResize,
-            _ => Shape::NsResize,
-        },
+    shape(region::cursor_for(hit))
+}
+
+fn shape(c: Cursor) -> Shape {
+    match c {
+        Cursor::Pointer => Shape::Pointer,
+        Cursor::Move => Shape::Move,
+        Cursor::Crosshair => Shape::Crosshair,
+        Cursor::NwseResize => Shape::NwseResize,
+        Cursor::NeswResize => Shape::NeswResize,
+        Cursor::EwResize => Shape::EwResize,
+        Cursor::NsResize => Shape::NsResize,
     }
 }
 
@@ -649,30 +530,7 @@ fn paint(state: &RegionSelect, i: usize, ptr: *mut u8, w: i32, h: i32, buttons: 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    const R: Rect = Rect { left: 100, top: 100, right: 300, bottom: 200 };
-
-    #[test]
-    fn hits_edges_corners_inside_and_outside() {
-        assert_eq!(hit_rect(R, 100, 150), Hit::Resize(Edges { left: true, ..Default::default() }));
-        assert_eq!(hit_rect(R, 305, 150), Hit::Resize(Edges { right: true, ..Default::default() }));
-        assert_eq!(hit_rect(R, 200, 96), Hit::Resize(Edges { top: true, ..Default::default() }));
-        assert_eq!(hit_rect(R, 299, 199), Hit::Resize(Edges { right: true, bottom: true, ..Default::default() }));
-        assert_eq!(hit_rect(R, 200, 150), Hit::Move);
-        assert_eq!(hit_rect(R, 50, 150), Hit::Draw);
-        assert_eq!(hit_rect(R, 200, 220), Hit::Draw);
-        // Too thin to tell the edges apart: the far ones win.
-        let thin = Rect { left: 100, top: 100, right: 104, bottom: 200 };
-        assert_eq!(hit_rect(thin, 102, 150), Hit::Resize(Edges { right: true, ..Default::default() }));
-    }
-
-    #[test]
-    fn resizing_moves_only_grabbed_edges_and_flips() {
-        let e = Edges { right: true, bottom: true, ..Default::default() };
-        assert_eq!(resized(R, e, (50, -20)), Rect { left: 100, top: 100, right: 350, bottom: 180 });
-        let l = Edges { left: true, ..Default::default() };
-        assert_eq!(resized(R, l, (250, 0)), Rect { left: 300, top: 100, right: 350, bottom: 200 });
-    }
+    use eve_maj_core::region_select::Edges;
 
     #[test]
     fn cursors_match_edges() {

@@ -27,6 +27,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::*;
 use crate::fonts;
 use crate::gdi_overlay;
 use crate::globals::{self, Global};
+use crate::hotkeys::HotkeyManager;
 use crate::input;
 use crate::painter::Painter;
 use crate::scout::Scout;
@@ -60,6 +61,10 @@ unsafe extern "system" fn timer_window_proc(hwnd: HWND, msg: u32, wparam: WPARAM
             tray::handle_menu_command(wparam as u16);
             0
         }
+        crate::monitor::WM_CHATLOG_EVENTS => {
+            crate::monitor::on_events();
+            0
+        }
         WM_TIMER => {
             if wparam == TIMER_ID {
                 on_timer_tick();
@@ -67,7 +72,8 @@ unsafe extern "system" fn timer_window_proc(hwnd: HWND, msg: u32, wparam: WPARAM
             0
         }
         WM_HOTKEY => {
-            // Registered hotkeys arrive here once the hotkey manager is ported.
+            // RegisterHotKey presses and the mouse hook's re-posted matches alike.
+            crate::hotkeys::on_wm_hotkey(wparam as u32);
             0
         }
         WM_HOTKEYS_STATE_CHANGED => {
@@ -109,9 +115,7 @@ unsafe extern "system" fn timer_window_proc(hwnd: HWND, msg: u32, wparam: WPARAM
             match HotkeyAction::from_wparam(wparam) {
                 Some(action) => {
                     SLOG.info(format_args!("Protocol handler: {}", action.name()));
-                    if globals::hotkey_manager().is_none() {
-                        SLOG.warn(format_args!("Hotkey actions are not available in this build yet"));
-                    }
+                    crate::hotkeys::run_link_action(action);
                 }
                 None => SLOG.warn(format_args!("Unknown protocol hotkey action: {wparam}")),
             }
@@ -152,14 +156,20 @@ fn handle_command(cmd: Command) {
             }
         }
         Command::RevertPreview => revert_thumbnail_preview(),
-        // Suspending hotkeys while the dialog captures a key binding only matters once hotkeys are ported.
-        Command::DialogSuspendHotkeys | Command::DialogResumeHotkeys => {}
+        Command::DialogSuspendHotkeys | Command::DialogResumeHotkeys => {
+            if let Some(manager) = globals::hotkey_manager() {
+                manager.set_dialog_suspended(matches!(cmd, Command::DialogSuspendHotkeys));
+            }
+        }
         Command::StartRegionSelect(request) => {
             if let Some(painter) = globals::painter() {
                 painter.start_region_select(&request);
             }
         }
-        Command::Hotkey(_) => {}
+        Command::Hotkey(action) => {
+            SLOG.info(format_args!("Protocol handler: {}", action.name()));
+            crate::hotkeys::run_link_action(action);
+        }
     }
 }
 
@@ -187,6 +197,16 @@ fn on_timer_tick() {
         painter.update(&windows, &result.closed_windows, &result.name_changes);
         painter.update_notifications();
     }
+    // Logins and logouts reach the chat-log worker once per scan; tracker readings are pushed every tick on their own intervals.
+    if force_scan || !result.name_changes.is_empty() || !result.closed_windows.is_empty() {
+        crate::monitor::sync();
+    }
+    crate::monitor::tick();
+    crate::region_select::tick();
+    if let Some(manager) = globals::hotkey_manager() {
+        manager.check_dialog_alive();
+    }
+    crate::panels::update();
 
     let now = Ticks::now();
     if let Some(painter) = globals::painter() {
@@ -374,22 +394,6 @@ impl From<ConfigError> for FatalError {
     }
 }
 
-/// Logs that a profile setting is on but its feature isn't in this build yet.
-fn warn_unported_features(config: &Config) {
-    let unported = [
-        (config.chatlog.enabled, "Chatlog monitoring"),
-        (config.combat.enabled, "The combat DPS overlay"),
-        (config.mining.enabled, "The mining rate overlay"),
-        (config.bounty.enabled, "The bounty overlay"),
-        (config.resources.enabled, "The resource usage overlay"),
-    ];
-    for (enabled, feature) in unported {
-        if enabled {
-            SLOG.warn(format_args!("{feature} is enabled in this profile but not available in this build yet"));
-        }
-    }
-}
-
 fn main_impl() -> Result<(), FatalError> {
     set_cwd_to_exe_dir();
 
@@ -464,7 +468,6 @@ fn run() -> Result<(), FatalError> {
     // Not profile_name: load_profile() may have fallen back to default, and this heals global settings to match.
     gs.update_last_used(&config.profile_name)?;
     config.log_settings();
-    warn_unported_features(&config);
     globals::CONFIG.set(config);
 
     if gs.auto_register_protocol {
@@ -524,6 +527,10 @@ fn run_message_loop() -> Result<(), FatalError> {
     }
     globals::TIMER_HWND.set(timer_hwnd);
     let result = run_with_timer_window(timer_hwnd);
+    // Unregisters every hotkey and the mouse hook, and joins the chat-log worker, while the window they post to still exists.
+    globals::HOTKEY_MANAGER.take();
+    crate::monitor::shutdown();
+    crate::panels::shutdown();
     globals::TIMER_HWND.take();
     TRAY_ICON.take();
     unsafe { DestroyWindow(timer_hwnd) };
@@ -541,6 +548,9 @@ fn run_with_timer_window(timer_hwnd: HWND) -> Result<(), FatalError> {
         SLOG.info(format_args!("Update checks are disabled"));
     }
 
+    // Before the first thumbnails, so they start with their cycle-exclusion state.
+    globals::HOTKEY_MANAGER.set(Box::new(HotkeyManager::new(timer_hwnd)));
+
     let scout = globals::scout().expect("set above");
     scout.scan_for_eve_windows().map_err(FatalError::Scan)?;
 
@@ -556,6 +566,7 @@ fn run_with_timer_window(timer_hwnd: HWND) -> Result<(), FatalError> {
         }
     }
     painter.reflow_if_region_fit_active();
+    crate::monitor::sync();
 
     let interval = globals::config().timer.scan_interval_ms;
     if unsafe { SetTimer(timer_hwnd, TIMER_ID, interval, None) } == 0 {
@@ -608,7 +619,6 @@ fn reload_with_profile(new_profile_name: &str) -> Result<(), FatalError> {
     SLOG.info(format_args!("Loaded new config: {new_profile_name}"));
     let config = globals::config();
     config.log_settings();
-    warn_unported_features(config);
 
     // Picks up hotkey/profile-switch/log-level edits made via the config dialog while running, since global settings are otherwise only loaded once at startup.
     let reloaded = GlobalSettings::load();
@@ -618,6 +628,9 @@ fn reload_with_profile(new_profile_name: &str) -> Result<(), FatalError> {
     globals::GLOBAL_SETTINGS.set(reloaded);
     if let Err(err) = globals::GLOBAL_SETTINGS.get().expect("set above").update_last_used(new_profile_name) {
         SLOG.warn(format_args!("Failed to update global settings: {err}"));
+    }
+    if let Some(manager) = globals::hotkey_manager() {
+        manager.rebuild_and_register();
     }
 
     let painter = match Painter::new() {
@@ -649,6 +662,10 @@ fn reload_with_profile(new_profile_name: &str) -> Result<(), FatalError> {
             }
         }
     }
+
+    // Restarts monitoring only if its settings changed, and re-applies tracker readings to the new thumbnails.
+    crate::monitor::sync();
+    crate::monitor::force_refresh();
 
     let new_interval = config.timer.scan_interval_ms;
     unsafe { SetTimer(timer_hwnd, TIMER_ID, new_interval, None) };

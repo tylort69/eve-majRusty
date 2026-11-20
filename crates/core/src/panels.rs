@@ -12,14 +12,15 @@ use crate::types::{ListViewOrder, NotificationCategory, NotificationType};
 
 // ------------------------------------------------------------------------------------------------- client list --
 
-pub const LIST_WIDTH: i32 = 230;
-pub const LIST_HEADER_HEIGHT: i32 = 24;
-pub const LIST_ROW_HEIGHT: i32 = 28;
-pub const LIST_BADGE_LEFT: i32 = 8;
-pub const LIST_BADGE_RADIUS: i32 = 5;
-pub const LIST_TEXT_LEFT: i32 = LIST_BADGE_LEFT + LIST_BADGE_RADIUS * 2 + 7;
-pub const LIST_TEXT_PAD_Y: i32 = 6;
-pub const LIST_RIGHT_MARGIN: i32 = 8;
+// Sizes follow the settings window's Material 3 look (see ui_theme): roomier rows, a titled header.
+pub const LIST_WIDTH: i32 = 252;
+pub const LIST_HEADER_HEIGHT: i32 = 36;
+pub const LIST_ROW_HEIGHT: i32 = 32;
+pub const LIST_BADGE_LEFT: i32 = 14;
+pub const LIST_BADGE_RADIUS: i32 = 4;
+pub const LIST_TEXT_LEFT: i32 = LIST_BADGE_LEFT + LIST_BADGE_RADIUS * 2 + 10;
+pub const LIST_TEXT_PAD_Y: i32 = 7;
+pub const LIST_RIGHT_MARGIN: i32 = 12;
 /// Width kept free for the right-hand text when a long name is cut short.
 pub const LIST_NAME_RESERVE: i32 = 70;
 /// The list never lays out more columns than this, whatever listViewColumns says.
@@ -271,11 +272,11 @@ pub fn list_rows(cfg: &Config, items: &[ListItem<'_>]) -> Vec<ListRow> {
 // ----------------------------------------------------------------------------------------------- history panel --
 
 pub const HISTORY_CAPACITY: usize = 30;
-pub const HISTORY_HEADER_HEIGHT: i32 = 18;
-pub const HISTORY_FOOTER_HEIGHT: i32 = 18;
-pub const HISTORY_ROW_HEIGHT: i32 = 16;
-pub const HISTORY_TEXT_LEFT: i32 = 6;
-pub const HISTORY_RIGHT_MARGIN: i32 = 6;
+pub const HISTORY_HEADER_HEIGHT: i32 = 36;
+pub const HISTORY_FOOTER_HEIGHT: i32 = 40;
+pub const HISTORY_ROW_HEIGHT: i32 = 22;
+pub const HISTORY_TEXT_LEFT: i32 = 14;
+pub const HISTORY_RIGHT_MARGIN: i32 = 14;
 pub const HISTORY_HEADER_BG: u32 = 0x1A1A1A;
 pub const HISTORY_BODY_BG: u32 = 0x0F0F0F;
 pub const HISTORY_NAME_TEXT: u32 = 0xCCCCCC;

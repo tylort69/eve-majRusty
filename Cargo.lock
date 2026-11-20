@@ -790,11 +790,15 @@ dependencies = [
 name = "eve-maj-config"
 version = "2.0.0"
 dependencies = [
+ "embed-resource",
+ "eve-maj-app",
  "eve-maj-core",
+ "eve-maj-win",
  "gtk",
  "libc",
  "serde_json",
  "tao",
+ "windows-sys 0.59.0",
  "wry",
 ]
 

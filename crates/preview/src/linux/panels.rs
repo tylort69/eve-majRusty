@@ -15,6 +15,7 @@ use eve_maj_core::panels::{self as model, HistoryPanelVisibility, HistoryRow, Li
 use eve_maj_core::render::now_ms;
 use eve_maj_core::state::VisibilityState;
 use eve_maj_core::types::{FontWeight, ViewMode};
+use eve_maj_core::ui_theme::{self, UiPalette};
 use wayland_client::protocol::wl_surface::WlSurface;
 use wayland_protocols_wlr::layer_shell::v1::client::{zwlr_layer_shell_v1, zwlr_layer_surface_v1::{self, ZwlrLayerSurfaceV1}};
 
@@ -56,6 +57,7 @@ struct Font {
 
 #[derive(Debug, Clone, PartialEq)]
 struct ListContent {
+    palette: UiPalette,
     rows: Vec<ListRow>,
     columns: u32,
     opacity: u8,
@@ -64,6 +66,7 @@ struct ListContent {
 
 #[derive(Debug, Clone, PartialEq)]
 struct HistoryContent {
+    palette: UiPalette,
     rows: Vec<HistoryRow<WindowId>>,
     empty_text: &'static str,
     opacity: u8,
@@ -118,6 +121,8 @@ pub(super) struct Panels {
     drag: Option<PanelDrag>,
     pub(super) history: NotificationHistory<WindowId>,
     visibility: HistoryPanelVisibility,
+    /// The settings window's theme (Preferences), and global.settings.json's mtime when it was read; None until first use.
+    theme: Option<(UiPalette, Option<std::time::SystemTime>)>,
 }
 
 impl Panels {
@@ -187,6 +192,35 @@ impl App {
 
     /// Brings both panels in line with the config and the tracked clients: shows, hides, moves, resizes and
     /// repaints them as needed. Cheap when nothing changed.
+    /// The panels' colors: the theme picked in the settings window, re-read when global.settings.json changes.
+    fn panel_palette(&mut self) -> UiPalette {
+        let mtime = std::fs::metadata(eve_maj_core::config::GLOBAL_SETTINGS_FILE).and_then(|m| m.modified()).ok();
+        match self.panels.theme {
+            Some((palette, seen)) if seen == mtime => palette,
+            _ => {
+                let theme = if self.panels.theme.is_none() { self.global_settings.ui_theme.clone() } else { eve_maj_core::config::GlobalSettings::load().ui_theme };
+                let palette = UiPalette::for_theme(&theme);
+                if self.panels.theme.is_some() {
+                    SLOG.info(format_args!("Settings theme changed to {:?}, recoloring the panels", if theme.id.is_empty() { "default" } else { &theme.id }));
+                }
+                self.global_settings.ui_theme = theme;
+                self.panels.theme = Some((palette, mtime));
+                palette
+            }
+        }
+    }
+
+    /// Called with the profile watcher: picks up a theme change made in the settings window.
+    pub(super) fn check_panel_theme(&mut self) {
+        if self.panels.list.is_none() && self.panels.history_panel.is_none() {
+            return;
+        }
+        let before = self.panels.theme.map(|t| t.0);
+        if before != Some(self.panel_palette()) {
+            self.update_panels();
+        }
+    }
+
     pub(super) fn update_panels(&mut self) {
         let list = self.list_content();
         self.place_panel(Kind::List, list);
@@ -228,10 +262,13 @@ impl App {
             })
             .collect();
         let rows = model::list_rows(&self.config, &items);
+        drop(items);
+        let palette = self.panel_palette();
         let sources = rows.iter().map(|r| self.thumbs[shown[r.source]].window).collect();
         let display = &self.config.display;
         let size = model::list_size(display.list_view_columns, rows.len());
         let content = Content::List(ListContent {
+            palette,
             rows,
             columns: display.list_view_columns,
             opacity: display.list_view_opacity,
@@ -242,11 +279,13 @@ impl App {
     }
 
     fn history_content(&mut self) -> Wanted {
+        let palette = self.panel_palette();
         let display = &self.config.display;
         let size = (display.notif_info_panel_width.max(1), display.notif_info_panel_height.max(1));
         let rows = model::history_rows(&self.config, &self.panels.history, size.1, now_ms());
         self.panels.history_sources = rows.iter().map(|r| r.source).collect();
         let content = Content::History(HistoryContent {
+            palette,
             rows,
             empty_text: model::history_empty_text(self.panels.history.len()),
             opacity: display.notif_info_panel_opacity,
@@ -546,18 +585,73 @@ fn destroy(p: Panel) {
 }
 
 // --------------------------------------------------------------------------------------------------- drawing --
+//
+// The settings window's Material 3 look, in its theme's colors: a rounded surface card with an outline, a titled
+// header, pill highlights for the active and alerting clients, and filter chips. Colors the profile sets itself
+// (character colors, overlay stat colors, notification colors) are kept; the model's stock defaults become theme roles.
+
+const CORNER: f64 = 12.0;
+/// The stock sans of the settings window (its --font-sans), used in place of the profile's default "Segoe UI".
+const SANS: &str = "Roboto Flex, Roboto, Google Sans Text, Noto Sans, Segoe UI, sans-serif";
 
 fn rgb(cr: &cairo::Context, color: u32, alpha: f64) {
     cr.set_source_rgba(((color >> 16) & 0xFF) as f64 / 255.0, ((color >> 8) & 0xFF) as f64 / 255.0, (color & 0xFF) as f64 / 255.0, alpha);
 }
 
-fn fill(cr: &cairo::Context, x: i32, y: i32, w: i32, h: i32, color: u32, alpha: f64) {
-    if w <= 0 || h <= 0 {
+fn rounded(cr: &cairo::Context, x: f64, y: f64, w: f64, h: f64, r: f64) {
+    let r = r.min(w / 2.0).min(h / 2.0).max(0.0);
+    use std::f64::consts::{FRAC_PI_2, PI};
+    cr.new_sub_path();
+    cr.arc(x + w - r, y + r, r, -FRAC_PI_2, 0.0);
+    cr.arc(x + w - r, y + h - r, r, 0.0, FRAC_PI_2);
+    cr.arc(x + r, y + h - r, r, FRAC_PI_2, PI);
+    cr.arc(x + r, y + r, r, PI, 3.0 * FRAC_PI_2);
+    cr.close_path();
+}
+
+fn fill_rounded(cr: &cairo::Context, x: f64, y: f64, w: f64, h: f64, r: f64, color: u32, alpha: f64) {
+    if w <= 0.0 || h <= 0.0 {
         return;
     }
+    rounded(cr, x, y, w, h, r);
     rgb(cr, color, alpha);
-    cr.rectangle(x as f64, y as f64, w as f64, h as f64);
     let _ = cr.fill();
+}
+
+fn stroke_rounded(cr: &cairo::Context, x: f64, y: f64, w: f64, h: f64, r: f64, color: u32) {
+    rounded(cr, x + 0.5, y + 0.5, w - 1.0, h - 1.0, r);
+    rgb(cr, color, 1.0);
+    cr.set_line_width(1.0);
+    let _ = cr.stroke();
+}
+
+fn hline(cr: &cairo::Context, x0: i32, x1: i32, y: i32, color: u32) {
+    rgb(cr, color, 1.0);
+    cr.rectangle(x0 as f64, y as f64, (x1 - x0).max(0) as f64, 1.0);
+    let _ = cr.fill();
+}
+
+fn vline(cr: &cairo::Context, x: i32, y0: i32, y1: i32, color: u32) {
+    rgb(cr, color, 1.0);
+    cr.rectangle(x as f64, y0 as f64, 1.0, (y1 - y0).max(0) as f64);
+    let _ = cr.fill();
+}
+
+/// The panel's font: the profile's, except that its stock "Segoe UI" becomes the settings window's sans.
+fn panel_font(font: &Font, bold: bool) -> pango::FontDescription {
+    let name = if font.name.trim().is_empty() || font.name.eq_ignore_ascii_case("Segoe UI") { SANS } else { font.name.as_str() };
+    let mut d = super::overlay::font_description(name, font.size, font.weight);
+    if bold {
+        d.set_weight(pango::Weight::Semibold);
+    }
+    d
+}
+
+fn sized(font: &pango::FontDescription, delta: i32) -> pango::FontDescription {
+    let mut d = font.clone();
+    let px = (d.size() / pango::SCALE + delta).max(8);
+    d.set_absolute_size((px * pango::SCALE) as f64);
+    d
 }
 
 fn layout(cr: &cairo::Context, font: &pango::FontDescription, text: &str, max_w: Option<i32>) -> pango::Layout {
@@ -581,17 +675,25 @@ fn show(cr: &cairo::Context, l: &pango::Layout, x: i32, y: i32, color: u32) {
     pangocairo::functions::show_layout(cr, l);
 }
 
-/// The list's text: a dim copy one pixel right and one down under the real one, a soft glow.
-fn show_glow(cr: &cairo::Context, l: &pango::Layout, x: i32, y: i32, color: u32) {
-    let glow = scale_rgb(color, 108);
-    show(cr, l, x + 1, y, glow);
-    show(cr, l, x, y + 1, glow);
-    show(cr, l, x, y, color);
+/// `l` vertically centred in the band from `top` of `height`.
+fn show_centered(cr: &cairo::Context, l: &pango::Layout, x: i32, top: i32, height: i32, color: u32) {
+    show(cr, l, x, top + ((height - l.pixel_size().1) / 2).max(0), color);
 }
 
-fn scale_rgb(color: u32, factor: u32) -> u32 {
-    let c = |shift: u32| (((color >> shift) & 0xFF) * factor / 255) << shift;
-    c(16) | c(8) | c(0)
+/// A stock model color replaced by a theme role; anything the profile chose is kept.
+fn themed(color: u32, stock: u32, role: u32) -> u32 {
+    if color & 0xFF_FFFF == stock { role } else { color & 0xFF_FFFF }
+}
+
+/// A small rounded count chip ending at `right`, centred in the header; returns its left edge.
+fn count_chip(cr: &cairo::Context, font: &pango::FontDescription, text: &str, right: i32, header: i32, pal: &UiPalette) -> i32 {
+    let l = layout(cr, font, text, None);
+    let (tw, th) = l.pixel_size();
+    let (w, h) = (tw + 16, th + 4);
+    let (x, y) = (right - w, (header - h) / 2);
+    fill_rounded(cr, x as f64, y as f64, w as f64, h as f64, h as f64 / 2.0, pal.secondary_container, 1.0);
+    show(cr, &l, x + 8, y + 2, pal.on_secondary_container);
+    x
 }
 
 fn paint(content: &Content, ptr: *mut u8, w: i32, h: i32) -> Result<(), cairo::Error> {
@@ -602,26 +704,28 @@ fn paint(content: &Content, ptr: *mut u8, w: i32, h: i32) -> Result<(), cairo::E
     cr.set_source_rgba(0.0, 0.0, 0.0, 0.0);
     cr.paint()?;
     cr.set_operator(cairo::Operator::Over);
-    let opacity = match content {
-        Content::List(c) => {
-            paint_list(&cr, c, w, h);
-            c.opacity
-        }
-        Content::History(c) => {
-            paint_history(&cr, c, w, h);
-            c.opacity
-        }
+    let (pal, opacity) = match content {
+        Content::List(c) => (c.palette, c.opacity),
+        Content::History(c) => (c.palette, c.opacity),
     };
+    // The card: everything else is clipped to its rounded corners.
+    let (wf, hf) = (w as f64, h as f64);
+    fill_rounded(&cr, 0.0, 0.0, wf, hf, CORNER, pal.surface_container_low, 1.0);
+    cr.save()?;
+    rounded(&cr, 0.0, 0.0, wf, hf, CORNER);
+    cr.clip();
+    match content {
+        Content::List(c) => paint_list(&cr, c, w),
+        Content::History(c) => paint_history(&cr, c, w, h),
+    }
+    cr.restore()?;
+    stroke_rounded(&cr, 0.0, 0.0, wf, hf, CORNER, pal.outline_variant);
     drop(cr);
     surface.flush();
-    // SAFETY: as above; cairo is done with the pixels.
-    let pixels = unsafe { std::slice::from_raw_parts_mut(ptr as *mut u32, (w * h) as usize) };
-    if let Content::List(_) = content {
-        scanlines(pixels, w as usize, h as usize);
-        vignette(pixels, w as usize, h as usize);
-    }
-    // The whole panel fades with its opacity, on top of the backgrounds' own alpha (as the Windows layered window does).
+    // The whole panel fades with its opacity (as the Windows layered window does).
     if opacity < 255 {
+        // SAFETY: as above; cairo is done with the pixels.
+        let pixels = unsafe { std::slice::from_raw_parts_mut(ptr as *mut u32, (w * h) as usize) };
         let a = opacity as u32;
         for p in pixels.iter_mut() {
             let ch = |shift: u32| ((((*p >> shift) & 0xFF) * a / 255) & 0xFF) << shift;
@@ -631,39 +735,63 @@ fn paint(content: &Content, ptr: *mut u8, w: i32, h: i32) -> Result<(), cairo::E
     Ok(())
 }
 
-fn paint_list(cr: &cairo::Context, c: &ListContent, w: i32, h: i32) {
+fn paint_list(cr: &cairo::Context, c: &ListContent, w: i32) {
     use model::*;
-    let alpha = c.opacity as f64 / 255.0;
+    let pal = &c.palette;
     let n = c.rows.len() as i32;
     let columns = effective_columns(c.columns, c.rows.len());
-    let font = super::overlay::font_description(&c.font.name, c.font.size, c.font.weight);
+    let font = panel_font(&c.font, false);
+    let bold = panel_font(&c.font, true);
+    let small = sized(&bold, -2);
 
-    fill(cr, 0, 0, w, LIST_HEADER_HEIGHT, LIST_HEADER_BG, alpha);
-    show_glow(cr, &layout(cr, &font, &format!("EVE-Maj Preview // {n}"), None), 8, 5, PANEL_HEADER_TEXT);
-    fill(cr, 0, LIST_HEADER_HEIGHT - 1, w, 1, PANEL_SEPARATOR, 1.0);
+    // Header: title on the left, the client count in a chip on the right.
+    let chip_left = count_chip(cr, &small, &n.to_string(), w - LIST_RIGHT_MARGIN, LIST_HEADER_HEIGHT, pal);
+    let title = layout(cr, &bold, "EVE-Maj Preview", Some(chip_left - LIST_BADGE_LEFT - 8));
+    show_centered(cr, &title, LIST_BADGE_LEFT, 0, LIST_HEADER_HEIGHT, pal.on_surface);
+    hline(cr, 0, w, LIST_HEADER_HEIGHT - 1, pal.outline_variant);
 
     for (i, row) in c.rows.iter().enumerate() {
         let (r, col) = (i as i32 / columns, i as i32 % columns);
         let top = LIST_HEADER_HEIGHT + r * LIST_ROW_HEIGHT;
         let left = col * LIST_WIDTH;
-        fill(cr, left, top, LIST_WIDTH, LIST_ROW_HEIGHT, row.background, alpha);
-        if r + 1 < items_in_column(n, columns, col) {
-            fill(cr, left, top + LIST_ROW_HEIGHT - 1, LIST_WIDTH, 1, PANEL_SEPARATOR, 1.0);
+        // The model marks an alerting row by its background, and the focused one by its badge color.
+        let alert = row.background != LIST_ROW_BG;
+        let active = !alert && matches!(row.badge, Badge::Dot(c) if c != BADGE_INACTIVE && c != BADGE_MINIMIZED && c != BADGE_ALERT);
+        // Pill highlight, inset like the settings window's selected navigation item.
+        let (px, py, pw, ph) = ((left + 6) as f64, (top + 3) as f64, (LIST_WIDTH - 12) as f64, (LIST_ROW_HEIGHT - 6) as f64);
+        if active {
+            fill_rounded(cr, px, py, pw, ph, ph / 2.0, pal.secondary_container, 1.0);
+        } else if alert {
+            let tint = if row.background == LIST_ROW_ALERT_BG { ui_theme::ERROR_CONTAINER } else { alert_tint_source(row.background) };
+            fill_rounded(cr, px, py, pw, ph, ph / 2.0, tint, 0.3);
         }
-        let (cx, cy) = ((left + LIST_BADGE_LEFT + LIST_BADGE_RADIUS) as f64 + 0.5, (top + LIST_ROW_HEIGHT / 2) as f64 + 0.5);
+
+        let (cx, cy) = ((left + LIST_BADGE_LEFT + LIST_BADGE_RADIUS) as f64 + 0.5, (top + LIST_ROW_HEIGHT / 2) as f64);
         let radius = LIST_BADGE_RADIUS as f64;
-        let dot = |color: u32| {
-            rgb(cr, color, 1.0);
-            cr.arc(cx, cy, radius, 0.0, std::f64::consts::TAU);
-            let _ = cr.fill();
-        };
         match row.badge {
-            Badge::Dot(color) => dot(color),
+            Badge::Dot(color) if color == BADGE_INACTIVE || color == BADGE_MINIMIZED => {
+                // Not focused: a hollow ring (dimmer when minimized).
+                cr.new_sub_path();
+                cr.arc(cx, cy, radius - 0.5, 0.0, std::f64::consts::TAU);
+                rgb(cr, if color == BADGE_MINIMIZED { pal.outline_variant } else { pal.outline }, 1.0);
+                cr.set_line_width(1.5);
+                let _ = cr.stroke();
+            }
+            Badge::Dot(color) => {
+                let color = match color {
+                    BADGE_ACTIVE => pal.primary,
+                    BADGE_ALERT => ui_theme::ERROR,
+                    c => c,
+                };
+                cr.new_sub_path();
+                cr.arc(cx, cy, radius, 0.0, std::f64::consts::TAU);
+                rgb(cr, color, 1.0);
+                let _ = cr.fill();
+            }
             Badge::Excluded => {
-                dot(BADGE_DISABLED_BG);
-                let arm = (radius - 1.0).max(2.0);
-                rgb(cr, BADGE_DISABLED_X, 1.0);
-                cr.set_line_width(1.2);
+                let arm = radius;
+                rgb(cr, ui_theme::ERROR, 1.0);
+                cr.set_line_width(1.6);
                 cr.move_to(cx - arm, cy - arm);
                 cr.line_to(cx + arm, cy + arm);
                 cr.move_to(cx - arm, cy + arm);
@@ -671,147 +799,124 @@ fn paint_list(cr: &cairo::Context, c: &ListContent, w: i32, h: i32) {
                 let _ = cr.stroke();
             }
         }
-        let (text_x, text_y) = (left + LIST_TEXT_LEFT, top + LIST_TEXT_PAD_Y);
+
+        let text_x = left + LIST_TEXT_LEFT;
+        let name_font = if active { &bold } else { &font };
+        let name_color = themed(row.name_color, LIST_NAME_TEXT, if active { pal.on_secondary_container } else { pal.on_surface });
         let name_max = LIST_WIDTH - LIST_TEXT_LEFT - LIST_RIGHT_MARGIN - LIST_NAME_RESERVE;
-        let name = layout(cr, &font, &row.name, None);
-        let name = if width_of(&name) > name_max { layout(cr, &font, &row.name, Some(name_max)) } else { name };
-        show_glow(cr, &name, text_x, text_y, row.name_color);
+        let name = layout(cr, name_font, &row.name, None);
+        let name = if width_of(&name) > name_max { layout(cr, name_font, &row.name, Some(name_max)) } else { name };
+        show_centered(cr, &name, text_x, top, LIST_ROW_HEIGHT, name_color);
         if !row.right_text.is_empty() {
-            // Right-aligned after the name with a small gap; shortened with "…" rather than drawn over the name (the
-            // Windows list lets them overlap, which happens more with Linux fallback fonts for "Segoe UI").
-            let right_edge = left + LIST_WIDTH - LIST_RIGHT_MARGIN;
-            let room = right_edge - (text_x + width_of(&name) + 8);
-            let right = layout(cr, &font, &row.right_text, None);
-            let right = if width_of(&right) > room { layout(cr, &font, &row.right_text, Some(room)) } else { right };
+            // Right-aligned after the name, shortened with "…" rather than drawn over it.
+            let right_edge = left + LIST_WIDTH - LIST_RIGHT_MARGIN - 4;
+            let room = right_edge - (text_x + width_of(&name) + 10);
+            let right_font = sized(&font, -1);
+            let right = layout(cr, &right_font, &row.right_text, None);
+            let right = if width_of(&right) > room { layout(cr, &right_font, &row.right_text, Some(room)) } else { right };
+            let color = match row.right_color {
+                LIST_NOTIFICATION_TEXT => pal.primary,
+                LIST_SYSTEM_TEXT => pal.on_surface_variant,
+                c => stat_tone(c),
+            };
             if room >= 16 {
-                show_glow(cr, &right, right_edge - width_of(&right), text_y, row.right_color);
+                show_centered(cr, &right, right_edge - width_of(&right), top, LIST_ROW_HEIGHT, color);
             }
         }
     }
 
     for col in 1..columns {
         let rows = items_in_column(n, columns, col - 1).max(items_in_column(n, columns, col));
-        fill(cr, col * LIST_WIDTH, LIST_HEADER_HEIGHT, 1, rows * LIST_ROW_HEIGHT, PANEL_SEPARATOR, 1.0);
+        vline(cr, col * LIST_WIDTH, LIST_HEADER_HEIGHT + 6, LIST_HEADER_HEIGHT + rows * LIST_ROW_HEIGHT - 6, pal.outline_variant);
     }
-    // Outer frame, stepped per column so it hugs each column's rows.
-    fill(cr, 0, 0, w, 1, PANEL_FRAME, alpha);
-    fill(cr, 0, 0, 1, h, PANEL_FRAME, alpha);
-    for col in 0..columns {
-        let bottom = LIST_HEADER_HEIGHT + items_in_column(n, columns, col) * LIST_ROW_HEIGHT - 1;
-        fill(cr, col * LIST_WIDTH, bottom, LIST_WIDTH, 1, PANEL_FRAME, alpha);
+}
+
+/// The overlays' stock stat colors (incoming red, outgoing green, mining blue, bounty gold) at the M3 tone the
+/// panel's other text uses; colors the profile set itself are kept.
+fn stat_tone(color: u32) -> u32 {
+    match color {
+        0xFF4444 => ui_theme::ERROR,
+        0x44FF44 => ui_theme::SUCCESS,
+        0x44AAFF => 0x9ECAFF,
+        0xFFD700 => 0xF2C94C,
+        c => c,
     }
-    let right_h = LIST_HEADER_HEIGHT + items_in_column(n, columns, columns - 1) * LIST_ROW_HEIGHT;
-    fill(cr, w - 1, 0, 1, right_h, PANEL_FRAME, alpha);
+}
+
+/// The notification border color behind a model alert tint (which mixes it into a dark grey), close enough to tint
+/// the pill with.
+fn alert_tint_source(bg: u32) -> u32 {
+    let up = |v: u32, base: u32| (v.saturating_sub(base) * 255 / 35).min(255);
+    (up((bg >> 16) & 0xFF, 0x1A) << 16) | (up((bg >> 8) & 0xFF, 0x1A) << 8) | up(bg & 0xFF, 0x20)
 }
 
 fn paint_history(cr: &cairo::Context, c: &HistoryContent, w: i32, h: i32) {
     use model::*;
-    let alpha = c.opacity as f64 / 255.0;
-    let font = super::overlay::font_description(&c.font.name, c.font.size, c.font.weight);
-    fill(cr, 0, 0, w, HISTORY_HEADER_HEIGHT, HISTORY_HEADER_BG, alpha);
-    fill(cr, 0, HISTORY_HEADER_HEIGHT, w, h - HISTORY_HEADER_HEIGHT, HISTORY_BODY_BG, alpha);
+    let pal = &c.palette;
+    let font = panel_font(&c.font, false);
+    let bold = panel_font(&c.font, true);
+    let small = sized(&bold, -2);
 
-    let spans = history_button_spans(w);
-    if c.show_filters {
-        fill(cr, 0, c.footer_top, w, h - c.footer_top, HISTORY_HEADER_BG, alpha);
-        for (i, &(l, r)) in spans.iter().enumerate() {
-            if c.enabled[i] {
-                fill(cr, l, c.footer_top, r - l, h - c.footer_top, HISTORY_BUTTON_ACTIVE_BG, alpha);
-            }
-        }
-        fill(cr, 0, c.footer_top, w, 1, PANEL_SEPARATOR, 1.0);
-        for &(l, _) in &spans[1..] {
-            fill(cr, l, c.footer_top, 1, h - c.footer_top, PANEL_SEPARATOR, 1.0);
-        }
-    }
-
-    let title = layout(cr, &font, HISTORY_TITLE, None);
-    show(cr, &title, HISTORY_TEXT_LEFT, ((HISTORY_HEADER_HEIGHT - title.pixel_size().1) / 2).max(0), PANEL_HEADER_TEXT);
+    let title = layout(cr, &bold, "Notifications", Some(w - 2 * HISTORY_TEXT_LEFT));
+    show_centered(cr, &title, HISTORY_TEXT_LEFT, 0, HISTORY_HEADER_HEIGHT, pal.on_surface);
+    hline(cr, 0, w, HISTORY_HEADER_HEIGHT - 1, pal.outline_variant);
 
     let max_w = (w - HISTORY_TEXT_LEFT - HISTORY_RIGHT_MARGIN).max(0);
     for (i, row) in c.rows.iter().enumerate() {
-        let y = HISTORY_HEADER_HEIGHT + i as i32 * HISTORY_ROW_HEIGHT + 1;
-        draw_history_row(cr, &font, row, HISTORY_TEXT_LEFT, y, max_w);
+        let top = HISTORY_HEADER_HEIGHT + 4 + i as i32 * HISTORY_ROW_HEIGHT;
+        draw_history_row(cr, &font, &bold, pal, row, HISTORY_TEXT_LEFT, top, max_w);
     }
     if c.rows.is_empty() {
-        show(cr, &layout(cr, &font, c.empty_text, Some(max_w)), HISTORY_TEXT_LEFT, HISTORY_HEADER_HEIGHT + 2, HISTORY_DIM_TEXT);
+        let l = layout(cr, &font, c.empty_text, Some(max_w));
+        show(cr, &l, HISTORY_TEXT_LEFT, HISTORY_HEADER_HEIGHT + 10, pal.on_surface_muted);
     }
+
     if c.show_filters {
-        for (i, &(l, r)) in spans.iter().enumerate() {
-            let label = layout(cr, &font, CATEGORIES[i].1, None);
+        hline(cr, 0, w, c.footer_top, pal.outline_variant);
+        let band = h - c.footer_top;
+        for (i, &(l, r)) in history_button_spans(w).iter().enumerate() {
+            // Chips inset within each click span.
+            let (x, cw) = ((l + 3) as f64 + if i == 0 { 5.0 } else { 0.0 }, (r - l - 6) as f64 - if i == 0 || i == 4 { 5.0 } else { 0.0 });
+            let ch = 24.0_f64.min(band as f64 - 8.0);
+            let y = c.footer_top as f64 + (band as f64 - ch) / 2.0;
+            let label = layout(cr, &small, CATEGORIES[i].1, None);
             let (lw, lh) = label.pixel_size();
-            let color = if c.enabled[i] { PANEL_HEADER_TEXT } else { HISTORY_DIM_TEXT };
-            show(cr, &label, l + ((r - l - lw).max(0)) / 2, c.footer_top + ((HISTORY_FOOTER_HEIGHT - lh) / 2).max(0), color);
+            let lx = (x + (cw - lw as f64) / 2.0).round() as i32;
+            let ly = (y + (ch - lh as f64) / 2.0).round() as i32;
+            if c.enabled[i] {
+                fill_rounded(cr, x, y, cw, ch, 8.0, pal.secondary_container, 1.0);
+                show(cr, &label, lx, ly, pal.on_secondary_container);
+            } else {
+                stroke_rounded(cr, x, y, cw, ch, 8.0, pal.outline_variant);
+                show(cr, &label, lx, ly, pal.on_surface_muted);
+            }
         }
     }
-    fill(cr, 0, HISTORY_HEADER_HEIGHT - 1, w, 1, PANEL_SEPARATOR, 1.0);
-    fill(cr, 0, 0, w, 1, PANEL_FRAME, alpha);
-    fill(cr, 0, h - 1, w, 1, PANEL_FRAME, alpha);
-    fill(cr, 0, 0, 1, h, PANEL_FRAME, alpha);
-    fill(cr, w - 1, 0, 1, h, PANEL_FRAME, alpha);
 }
 
-/// "Name: message", cut short to fit, with the timestamp (when shown) right-aligned and never dropped.
-fn draw_history_row(cr: &cairo::Context, font: &pango::FontDescription, row: &HistoryRow<WindowId>, x: i32, y: i32, max_w: i32) {
+/// "Name  message", cut short to fit, with the timestamp (when shown) right-aligned and never dropped.
+#[allow(clippy::too_many_arguments)]
+fn draw_history_row(cr: &cairo::Context, font: &pango::FontDescription, bold: &pango::FontDescription, pal: &UiPalette, row: &HistoryRow<WindowId>, x: i32, top: i32, max_w: i32) {
     let mut remaining = max_w;
     if let Some(ts) = &row.timestamp {
-        let l = layout(cr, font, ts, None);
+        let small = sized(font, -1);
+        let l = layout(cr, &small, ts, None);
         let ts_w = width_of(&l).min(max_w);
-        let gap = width_of(&layout(cr, font, " ", None));
-        remaining = (max_w - ts_w - gap).max(0);
-        show(cr, &l, x + max_w - ts_w, y, model::HISTORY_DIM_TEXT);
+        remaining = (max_w - ts_w - 10).max(0);
+        show_centered(cr, &l, x + max_w - ts_w, top, model::HISTORY_ROW_HEIGHT, pal.on_surface_muted);
     }
-    let name = layout(cr, font, &row.name, None);
+    let name_color = themed(row.name_color, model::HISTORY_NAME_TEXT, pal.on_surface);
+    let text_color = themed(row.text_color, 0xFFFFFF, pal.on_surface_variant);
+    let name = layout(cr, bold, &row.name, None);
     let name_w = width_of(&name);
     if name_w > remaining {
-        show(cr, &layout(cr, font, &row.name, Some(remaining)), x, y, row.name_color);
+        show_centered(cr, &layout(cr, bold, &row.name, Some(remaining)), x, top, model::HISTORY_ROW_HEIGHT, name_color);
         return;
     }
-    show(cr, &name, x, y, row.name_color);
-    let sep = layout(cr, font, ": ", None);
-    let sep_w = width_of(&sep);
-    if remaining - name_w < sep_w {
-        return;
-    }
-    show(cr, &sep, x + name_w, y, row.text_color);
-    let room = remaining - name_w - sep_w;
-    if room > 0 {
-        show(cr, &layout(cr, font, &row.text, Some(room)), x + name_w + sep_w, y, row.text_color);
-    }
-}
-
-/// Every other row of pixels slightly darker, as on Windows.
-fn scanlines(pixels: &mut [u32], w: usize, h: usize) {
-    for y in (1..h).step_by(2) {
-        for p in &mut pixels[y * w..(y + 1) * w] {
-            if *p >> 24 != 0 {
-                *p = (*p & 0xFF00_0000) | scale_rgb(*p & 0xFF_FFFF, 228);
-            }
-        }
-    }
-}
-
-/// Darkens towards the edges (up to about a third at the very edge), as on Windows.
-fn vignette(pixels: &mut [u32], w: usize, h: usize) {
-    if w < 2 || h < 2 {
-        return;
-    }
-    let (cx, cy) = (w / 2, h / 2);
-    let (max_dx, max_dy) = (cx.max(1), cy.max(1));
-    for y in 0..h {
-        let dy = y.abs_diff(cy);
-        let edge_y = if dy * 2 > max_dy { ((dy * 2 - max_dy) * 255 / max_dy) as u32 } else { 0 };
-        for x in 0..w {
-            let p = &mut pixels[y * w + x];
-            if *p >> 24 == 0 {
-                continue;
-            }
-            let dx = x.abs_diff(cx);
-            let edge_x = if dx * 2 > max_dx { ((dx * 2 - max_dx) * 255 / max_dx) as u32 } else { 0 };
-            let edge = edge_x.max(edge_y).min(255);
-            if edge > 0 {
-                *p = (*p & 0xFF00_0000) | scale_rgb(*p & 0xFF_FFFF, 255 - edge * 80 / 255);
-            }
-        }
+    show_centered(cr, &name, x, top, model::HISTORY_ROW_HEIGHT, name_color);
+    let gap = 8;
+    let room = remaining - name_w - gap;
+    if room > 12 {
+        show_centered(cr, &layout(cr, font, &row.text, Some(room)), x + name_w + gap, top, model::HISTORY_ROW_HEIGHT, text_color);
     }
 }

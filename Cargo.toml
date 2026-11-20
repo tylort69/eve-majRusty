@@ -7,7 +7,6 @@ version = "2.0.0"
 edition = "2021"
 license-file = "LICENSE"
 repository = "https://github.com/tylort69/eve-majRusty"
-homepage = "https://github.com/tylort69/eve-majRusty"
 
 [profile.release]
 opt-level = 3

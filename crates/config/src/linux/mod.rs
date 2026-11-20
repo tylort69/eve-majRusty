@@ -1,8 +1,7 @@
 //! Linux front end of the settings dialog: a native window (tao + wry/WebKitGTK) showing the dialog page served by
-//! [`server`], with [`backend`] answering the page's calls against the same files the preview app uses.
+//! [`crate::server`], with [`crate::backend`] answering the page's calls against the same files the preview app uses.
 
-mod backend;
-mod server;
+pub mod platform;
 
 use std::path::PathBuf;
 
@@ -15,16 +14,9 @@ use tao::platform::unix::WindowExtUnix;
 use tao::window::WindowBuilder;
 use wry::{WebViewBuilder, WebViewBuilderExtUnix};
 
-const SLOG: Scope = Scope::new("config");
+use crate::{backend, server, UiEvent};
 
-/// Requests from the backend thread to the window.
-#[derive(Debug)]
-pub enum UiEvent {
-    Close,
-    SetAlwaysOnTop(bool),
-    /// Open a native picker and send back the chosen path ("" when cancelled).
-    Browse(backend::Browse, std::sync::mpsc::Sender<String>),
-}
+const SLOG: Scope = Scope::new("config");
 
 /// Native folder/file chooser (portal-aware), run modally on the GTK thread.
 fn pick(kind: backend::Browse) -> String {
@@ -61,7 +53,7 @@ pub fn run() -> Result<(), String> {
     std::fs::create_dir_all(dir.join("profiles")).map_err(|e| format!("can't create {}: {e}", dir.display()))?;
     std::env::set_current_dir(&dir).map_err(|e| format!("can't enter {}: {e}", dir.display()))?;
     let global = GlobalSettings::load();
-    backend::set_local_app_data_from_wine();
+    platform::set_local_app_data_from_wine();
     // A profile file name on the command line opens that one; otherwise the last used, as on Windows.
     let profile = std::env::args()
         .nth(1)
@@ -100,8 +92,8 @@ pub fn run() -> Result<(), String> {
         match event {
             Event::WindowEvent { event: WindowEvent::CloseRequested, .. } | Event::UserEvent(UiEvent::Close) => {
                 // Safety net, as on Windows: drop any unsaved live preview and give the app its hotkeys back.
-                backend::send_command(&eve_maj_core::protocol::Command::RevertPreview);
-                backend::send_command(&eve_maj_core::protocol::Command::DialogResumeHotkeys);
+                platform::send_command(&eve_maj_core::protocol::Command::RevertPreview);
+                platform::send_command(&eve_maj_core::protocol::Command::DialogResumeHotkeys);
                 log::flush();
                 *control_flow = ControlFlow::Exit;
             }
