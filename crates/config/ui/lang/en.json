@@ -1098,5 +1098,17 @@
   "update.status.noAsset": "A new version is available (you have {current}), but its release has no downloadable zip. Open the release page to update manually.",
   "update.status.noDigest": "no published checksum",
   "update.status.ready": "{version} is downloaded and verified. Install it when you're ready.",
-  "update.status.upToDate": "You're on the latest version ({version})."
+  "update.status.upToDate": "You're on the latest version ({version}).",
+  "tab.preferences.section.theme.heading": "Theme",
+  "tab.preferences.section.theme.hint": "Colors for this settings window. Pick a faction theme or build your own. A profile with its own accent color keeps it for highlights.",
+  "theme.name.default": "Default",
+  "theme.name.custom": "Custom",
+  "theme.custom.hint": "Enter colors as hex (#3A7BD5) or RGB (58, 123, 213). Only Primary is required; leave the others empty to derive them from it.",
+  "theme.custom.primary": "Primary",
+  "theme.custom.secondary": "Secondary",
+  "theme.custom.tertiary": "Tertiary",
+  "theme.custom.neutral": "Background",
+  "theme.custom.auto": "Auto",
+  "theme.custom.invalid": "Not a color. Use hex (#3A7BD5) or RGB (58, 123, 213).",
+  "theme.custom.noAlpha": "Transparency isn't supported. Use an opaque hex or RGB color."
 }

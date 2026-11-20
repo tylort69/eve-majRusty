@@ -1098,5 +1098,17 @@
   "update.status.noAsset": "Une nouvelle version est disponible (vous avez {current}), mais la publication ne contient pas de zip téléchargeable. Ouvrez la page de la version pour mettre à jour manuellement.",
   "update.status.noDigest": "aucune somme de contrôle publiée",
   "update.status.ready": "{version} est téléchargée et vérifiée. Installez-la quand vous êtes prêt.",
-  "update.status.upToDate": "Vous utilisez la dernière version ({version})."
+  "update.status.upToDate": "Vous utilisez la dernière version ({version}).",
+  "tab.preferences.section.theme.heading": "Thème",
+  "tab.preferences.section.theme.hint": "Couleurs de cette fenêtre de paramètres. Choisissez un thème de faction ou créez le vôtre. Un profil avec sa propre couleur d'accent la garde pour les surlignages.",
+  "theme.name.default": "Par défaut",
+  "theme.name.custom": "Personnalisé",
+  "theme.custom.hint": "Saisissez les couleurs en hex (#3A7BD5) ou RGB (58, 123, 213). Seul Primaire est requis ; les champs vides en sont dérivés.",
+  "theme.custom.primary": "Primaire",
+  "theme.custom.secondary": "Secondaire",
+  "theme.custom.tertiary": "Tertiaire",
+  "theme.custom.neutral": "Arrière-plan",
+  "theme.custom.auto": "Auto",
+  "theme.custom.invalid": "Couleur invalide. Utilisez hex (#3A7BD5) ou RGB (58, 123, 213).",
+  "theme.custom.noAlpha": "La transparence n'est pas prise en charge. Utilisez une couleur hex ou RGB opaque."
 }

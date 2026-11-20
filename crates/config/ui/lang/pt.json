@@ -1098,5 +1098,17 @@
   "update.status.noAsset": "Uma nova versão está disponível (você tem {current}), mas a versão não tem um zip para download. Abra a página da versão para atualizar manualmente.",
   "update.status.noDigest": "sem checksum publicado",
   "update.status.ready": "{version} foi baixada e verificada. Instale quando estiver pronto.",
-  "update.status.upToDate": "Você está na versão mais recente ({version})."
+  "update.status.upToDate": "Você está na versão mais recente ({version}).",
+  "tab.preferences.section.theme.heading": "Tema",
+  "tab.preferences.section.theme.hint": "Cores desta janela de configurações. Escolha um tema de facção ou crie o seu. Um perfil com cor de destaque própria a mantém nos realces.",
+  "theme.name.default": "Padrão",
+  "theme.name.custom": "Personalizado",
+  "theme.custom.hint": "Insira cores em hex (#3A7BD5) ou RGB (58, 123, 213). Apenas Primária é obrigatória; as vazias são derivadas dela.",
+  "theme.custom.primary": "Primária",
+  "theme.custom.secondary": "Secundária",
+  "theme.custom.tertiary": "Terciária",
+  "theme.custom.neutral": "Fundo",
+  "theme.custom.auto": "Auto",
+  "theme.custom.invalid": "Não é uma cor. Use hex (#3A7BD5) ou RGB (58, 123, 213).",
+  "theme.custom.noAlpha": "Transparência não é suportada. Use uma cor hex ou RGB opaca."
 }

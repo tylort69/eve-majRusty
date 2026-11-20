@@ -1098,5 +1098,17 @@
   "update.status.noAsset": "Dostępna jest nowa wersja (masz {current}), ale wydanie nie zawiera pliku zip do pobrania. Otwórz stronę wydania, aby zaktualizować ręcznie.",
   "update.status.noDigest": "brak opublikowanej sumy kontrolnej",
   "update.status.ready": "{version} została pobrana i zweryfikowana. Zainstaluj ją, gdy będziesz gotowy.",
-  "update.status.upToDate": "Masz najnowszą wersję ({version})."
+  "update.status.upToDate": "Masz najnowszą wersję ({version}).",
+  "tab.preferences.section.theme.heading": "Motyw",
+  "tab.preferences.section.theme.hint": "Kolory tego okna ustawień. Wybierz motyw frakcji lub stwórz własny. Profil z własnym kolorem akcentu zachowuje go dla wyróżnień.",
+  "theme.name.default": "Domyślny",
+  "theme.name.custom": "Własny",
+  "theme.custom.hint": "Podaj kolory jako hex (#3A7BD5) lub RGB (58, 123, 213). Wymagany jest tylko Podstawowy; puste pola zostaną z niego wyliczone.",
+  "theme.custom.primary": "Podstawowy",
+  "theme.custom.secondary": "Drugorzędny",
+  "theme.custom.tertiary": "Trzeciorzędny",
+  "theme.custom.neutral": "Tło",
+  "theme.custom.auto": "Auto",
+  "theme.custom.invalid": "To nie jest kolor. Użyj hex (#3A7BD5) lub RGB (58, 123, 213).",
+  "theme.custom.noAlpha": "Przezroczystość nie jest obsługiwana. Użyj nieprzezroczystego koloru hex lub RGB."
 }

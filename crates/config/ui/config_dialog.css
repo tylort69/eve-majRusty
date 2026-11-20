@@ -15,75 +15,139 @@
 }
 
 :root {
-    /* Quiet Terminal palette. One warm near-black ground, one accent (amber)
-       that covers both focus and the single "warning/auto-corrected" job,
-       and destructive kept a distinct hue from error so a validation problem
-       never reads the same as a delete button. */
-    --color-bg: #0b0c0d;
-    --color-panel: #131416;
-    --color-surface: #1a1b1d;
-    --color-surface-alt: #202224;
-    --color-border-faint: #26282c;
-    --color-border: #35383d;
-    /* Lightened from #55585e (2.4:1) to clear the 3:1 SC 1.4.11 wants for a
-       control's own resting border - this is every input/select/button edge. */
-    --color-border-strong: #6b6e75;
-    --color-text: #e8e6e1;
-    --color-text-secondary: #c4c0b6;
-    --color-muted: #8b8f96;
-    --color-accent: #d9a441;
-    --color-accent-hover: #e8b75f;
-    --color-accent-rgb: 217, 164, 65;
-    --color-accent-ink: #1a1408;
-    --color-error: #e05a4e;
-    --color-error-rgb: 224, 90, 78;
-    --color-success: #5ec98f;
-    --color-success-rgb: 94, 201, 143;
-    /* Lightened from #b0492f (3.15:1 as the hover foreground of every delete
-       button) to clear 4.5:1 AA. Fill/fill-hover darkened to match so white
-       text on them clears AA too - hover previously read *less* legible than rest. */
-    --color-destructive: #d3673f;
-    --color-destructive-fill: #ad4527;
-    --color-destructive-fill-hover: #bb4f30;
-    --color-purple: #a988d1;
-    --color-sky: #7fb3d9;
-    /* Three deliberate tiers: small chips, controls, containers. */
-    --radius-sm: 2px;
-    --radius: 3px;
-    --radius-lg: 4px;
-    --font-mono: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    /* Material You (Material Design 3), dark scheme. Tonal palettes generated from the
+       app's amber seed (#d9a441): primary is the seed's tone 80, containers tone 30/90,
+       and the neutral surfaces carry the same warm hue at low chroma, so every surface
+       reads as part of one family instead of a flat grey. */
+    --md-primary: #f5bd62;
+    --md-on-primary: #432c00;
+    --md-primary-container: #604100;
+    --md-on-primary-container: #ffddb0;
+    --md-secondary: #dcc3a1;
+    --md-on-secondary: #3e2e16;
+    --md-secondary-container: #56442a;
+    --md-on-secondary-container: #f9dfbb;
+    --md-tertiary: #b5cea3;
+    --md-on-tertiary: #213618;
+    --md-tertiary-container: #374d2d;
+    --md-on-tertiary-container: #d1eabd;
+    --md-error: #ffb4ab;
+    --md-on-error: #690005;
+    --md-error-container: #93000a;
+    --md-on-error-container: #ffdad6;
+    --md-success: #8fd5a6;
+    --md-success-container: #12512f;
+    --md-on-success-container: #abf2c1;
+    --md-surface: #17130e;
+    --md-surface-dim: #17130e;
+    --md-surface-bright: #3e3832;
+    --md-surface-container-lowest: #120e09;
+    --md-surface-container-low: #1f1b16;
+    --md-surface-container: #231f1a;
+    --md-surface-container-high: #2e2924;
+    --md-surface-container-highest: #39342e;
+    --md-on-surface: #ebe1d9;
+    --md-on-surface-variant: #d4c4b4;
+    --md-outline: #9c8e80;
+    --md-outline-variant: #504539;
+    --md-inverse-surface: #ebe1d9;
+    --md-inverse-on-surface: #352f2a;
+    --md-inverse-primary: #7f5700;
+    --md-scrim: rgba(0, 0, 0, 0.6);
+    --md-primary-rgb: 245, 189, 98;
+    --md-on-surface-rgb: 235, 225, 217;
+    --md-outline-variant-rgb: 80, 69, 57;
+    --md-on-surface-muted: #a99a8b;
+    --md-primary-hover: #ffcd85;
+    --md-secondary-container-hover: #614e33;
 
-    /* 4px grid. --space-2 is the rhythm nearly everything already used as a
-       raw literal; the rest name what was likewise already a repeated literal. */
+    /* State layers: an on-color overlay at a fixed opacity per interaction. */
+    --md-state-hover: 0.08;
+    --md-state-focus: 0.1;
+    --md-state-pressed: 0.1;
+    --md-state-dragged: 0.16;
+
+    /* Shape scale. */
+    --md-shape-xs: 4px;
+    --md-shape-sm: 8px;
+    --md-shape-md: 12px;
+    --md-shape-lg: 16px;
+    --md-shape-xl: 28px;
+    --md-shape-full: 999px;
+
+    /* Elevation (dark theme: shadow plus the surface-container tone carries depth). */
+    --md-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+    --md-elevation-2: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+    --md-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3);
+
+    /* Motion. */
+    --md-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+    --md-easing-emphasized-decel: cubic-bezier(0.05, 0.7, 0.1, 1);
+    --md-duration-short: 150ms;
+    --md-duration-medium: 250ms;
+
+    /* Type: Roboto where installed, else Noto Sans (also Google's), else the system UI face. */
+    --font-sans: 'Roboto Flex', 'Roboto', 'Google Sans Text', 'Noto Sans', 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'Cascadia Code', 'Roboto Mono', 'Noto Sans Mono', 'Consolas', monospace;
+
+    /* The legacy names every component rule below is written against, mapped onto M3 roles,
+       so the whole sheet follows the scheme without restating each rule. */
+    --color-bg: var(--md-surface);
+    --color-panel: var(--md-surface-container-low);
+    --color-surface: var(--md-surface-container);
+    --color-surface-alt: var(--md-surface-container-high);
+    --color-border-faint: rgba(var(--md-outline-variant-rgb), 0.6);
+    --color-border: var(--md-outline-variant);
+    --color-border-strong: var(--md-outline);
+    --color-text: var(--md-on-surface);
+    --color-text-secondary: var(--md-on-surface-variant);
+    --color-muted: var(--md-on-surface-muted);
+    --color-accent: var(--md-primary);
+    --color-accent-hover: var(--md-primary-hover);
+    --color-accent-rgb: var(--md-primary-rgb);
+    --color-accent-ink: var(--md-on-primary);
+    --color-error: var(--md-error);
+    --color-error-rgb: 255, 180, 171;
+    --color-success: var(--md-success);
+    --color-success-rgb: 143, 213, 166;
+    --color-destructive: #ffb4ab;
+    --color-destructive-fill: var(--md-error-container);
+    --color-destructive-fill-hover: #a8131a;
+    --color-purple: #d0bcff;
+    --color-sky: #a6c8ff;
+
+    --radius-sm: var(--md-shape-xs);
+    --radius: var(--md-shape-sm);
+    --radius-lg: var(--md-shape-md);
+
+    /* 4px grid. */
     --space-1: 4px;
     --space-2: 8px;
     --space-3: 12px;
     --space-4: 16px;
     --space-5: 20px;
+    --space-6: 24px;
 
-    /* h3 steps up from body so a section title reads a level above its
-       content instead of matching it at the same size. */
-    --fs-micro: 9px;
-    --fs-small: 10px;
-    --fs-label: 11px;
-    --fs-body: 12px;
-    --fs-heading: 14px;
+    /* Type scale, desktop density (M3 label/body/title roles, one step tighter). */
+    --fs-micro: 11px;
+    --fs-small: 12px;
+    --fs-label: 12.5px;
+    --fs-body: 13.5px;
+    --fs-heading: 16px;
+    --fs-title-lg: 20px;
     --fw-normal: 400;
     --fw-medium: 500;
     --fw-semibold: 600;
     --fw-bold: 700;
-    --lh-tight: 1.2;
-    --lh-body: 1.4;
+    --lh-tight: 1.25;
+    --lh-body: 1.45;
 
-    /* Named so the next dense context (a table row, a compact list) reuses
-       this instead of re-deriving it from scratch. */
-    --control-h: 28px;
-    --control-h-dense: 22px;
+    --control-h: 36px;
+    --control-h-dense: 28px;
 
-    /* One shadow per kind of floating surface, not one per instance. */
-    --shadow-raised: 0 2px 8px rgba(0, 0, 0, 0.5);
-    --shadow-overlay: 0 4px 16px rgba(0, 0, 0, 0.6);
-    --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.55);
+    --shadow-raised: var(--md-elevation-2);
+    --shadow-overlay: var(--md-elevation-3);
+    --shadow-modal: var(--md-elevation-3);
 
     --z-guide: 1;
     --z-dragging: 2;
@@ -91,25 +155,18 @@
     --z-sticky-top: 11;
     --z-popover: 500;
     --z-modal: 10000;
-    /* Above --z-modal: the picker opens from swatches that live inside
-       modals, and previously shared the same 10000 as .modal - stacking
-       between them was decided by DOM order alone. */
+    /* Above --z-modal: the picker opens from swatches inside modals. */
     --z-color-picker: 10001;
-    /* Same problem: the backup-restore flow opens profile-name-modal from inside import-settings-modal. */
+    /* The backup-restore flow opens profile-name-modal from inside import-settings-modal. */
     --z-modal-nested: 10001;
 
-    /* Label rail to control in .detail-form. Shared with the group panel's title
-       row, which lines its field up with that same rail from outside the grid. */
+    /* Label rail to control in .detail-form, shared with the group panel's title row. */
     --detail-label-gap: 12px;
-    /* A direction glyph plus the gap after it. A paired binding hangs this much
-       into its gutter so its field starts where an unpaired one's does. */
+    /* A direction glyph plus the gap after it; a paired binding hangs this into its gutter. */
     --binding-dir-offset: 22px;
-    /* Hover/interaction only - state transitions (.section-active,
-       .field-clamped, .main-app-status) keep their own slower timings. */
-    --t-hover: 0.15s;
-    /* For the div-acting-as-a-control rows (tab/accordion/roster/hint-toggle),
-       which have no border of their own to recolor on focus. */
-    --focus-ring-inset: inset 0 0 0 2px rgba(var(--color-accent-rgb), 0.45);
+    --t-hover: var(--md-duration-short);
+    --focus-ring: 0 0 0 2px var(--md-surface), 0 0 0 4px var(--md-primary);
+    --focus-ring-inset: inset 0 0 0 2px var(--md-primary);
 
     color-scheme: dark;
 }
@@ -127,25 +184,25 @@ input, textarea, select {
 }
 
 body {
-    background: var(--color-bg);
-    color: var(--color-text);
+    background: var(--md-surface);
+    color: var(--md-on-surface);
     height: 100vh;
     overflow: hidden;
     margin: 0;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: var(--fs-body);
     line-height: var(--lh-body);
+    -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-    background: var(--color-accent);
-    color: var(--color-accent-ink);
+    background: var(--md-primary);
+    color: var(--md-on-primary);
 }
 
-/* Honors the OS "reduce motion" setting across every animation and transition
-   here - the accordion chevron, panel fades, the status pulse, modal slide-ins.
-   Smooth scrolling is handled in config_dialog.js instead: scrollIntoView's
-   behavior option is a JS argument, so no stylesheet rule can override it. */
+/* Honors the OS "reduce motion" setting across every animation and transition.
+   Smooth scrolling is handled in config_dialog.js: scrollIntoView takes its
+   behavior as a JS argument, which no stylesheet rule can reach. */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -161,123 +218,149 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: var(--color-bg);
+    background: var(--md-surface);
 }
 
-/* Main layout */
 #main-content {
     display: flex;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
 }
 
-/* Sidebar - Terminal menu style. Widened from 169px - the longest de/ru
-   labels were tight against the edge at that width. */
-/* No fixed width - a flex item with no width set shrinks/grows to its
-   content's own max-content size, so the rail hugs whichever tab label is
-   longest instead of reserving space for one that isn't there. */
+/* Navigation drawer (standard, always visible): grouped destinations with a pill
+   indicator, and the active page's sections nested under it as jump links. */
 #tabs-sidebar {
-    background: var(--color-panel);
-    border-right: 1px solid var(--color-border);
-    padding: 6px 0;
-    overflow-y: auto;
+    width: 252px;
     flex-shrink: 0;
+    background: var(--md-surface-container-low);
+    padding: var(--space-2) var(--space-3) var(--space-4);
+    overflow-y: auto;
+    border-top-right-radius: var(--md-shape-lg);
+}
+
+.nav-group-label {
+    padding: var(--space-4) var(--space-4) var(--space-2);
+    color: var(--md-on-surface-variant);
+    font-size: var(--fs-small);
+    font-weight: var(--fw-medium);
+    letter-spacing: 0.4px;
+}
+
+.nav-group-label::first-letter,
+.tab-label::first-letter {
+    text-transform: uppercase;
 }
 
 .tab-item {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 14px 6px 8px;
+    gap: var(--space-3);
+    height: 44px;
+    padding: 0 var(--space-4);
+    margin: 1px 0;
+    border-radius: var(--md-shape-full);
     cursor: pointer;
-    transition: background var(--t-hover), color var(--t-hover), border-color var(--t-hover);
-    color: var(--color-muted);
+    color: var(--md-on-surface-variant);
     font-size: var(--fs-body);
+    font-weight: var(--fw-medium);
+    letter-spacing: 0.1px;
     white-space: nowrap;
-    font-weight: var(--fw-bold);
-    letter-spacing: 0.5px;
-    text-transform: capitalize;
-    border-left: 2px solid transparent;
+    transition: background-color var(--md-duration-short) var(--md-easing-standard), color var(--md-duration-short);
+}
+
+.tab-label {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .tab-glyph {
     flex: none;
-    width: 14px;
-    text-align: center;
-    font-size: 11px;
-    color: var(--color-muted);
-    transition: color var(--t-hover);
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    color: inherit;
 }
 
-/* One step quieter than .active's --color-surface-alt, so hovering an
-   inactive tab doesn't read as if it were the selected one. */
+.tab-glyph svg {
+    width: 20px;
+    height: 20px;
+}
+
 .tab-item:hover {
-    background: var(--color-surface);
-    color: var(--color-text);
-}
-
-.tab-item:hover .tab-glyph {
-    color: var(--color-text);
+    background: rgba(var(--md-on-surface-rgb), var(--md-state-hover));
+    color: var(--md-on-surface);
 }
 
 .tab-item.active {
-    background: var(--color-surface-alt);
-    color: var(--color-text);
-    border-left-color: var(--color-accent);
+    background: var(--md-secondary-container);
+    color: var(--md-on-secondary-container);
+    font-weight: var(--fw-semibold);
 }
 
-.tab-item.active .tab-glyph {
-    color: var(--color-accent);
-}
-
-/* Inset rather than an outer glow so it doesn't bleed over the sidebar
-   divider. Keeps focus reading as amber, same as every other control. */
 .tab-item:focus-visible {
     outline: none;
-    background: var(--color-surface-alt);
-    color: var(--color-text);
-    border-left-color: var(--color-accent);
     box-shadow: var(--focus-ring-inset);
 }
 
 .subheader-list {
     display: none;
+    padding: 2px 0 var(--space-2);
 }
 
 .tab-item.active + .subheader-list {
     display: block;
 }
 
-/* No text-transform here - renders the heading text as authored rather than
-   adding a second casing system alongside .tab-item's uppercase above it.
-   Left padding matches .tab-item's own text start (2px reserved border-left,
-   even when transparent + 8px edge + 14px glyph + 8px gap), so a submenu
-   label lines up under the tab label above it, not its glyph. */
+/* Lines up with the page label above it (16px padding + 20px icon + 12px gap). */
 .subheader-item {
-    padding: 3px 10px 3px 32px;
+    position: relative;
+    padding: 5px var(--space-3) 5px 48px;
+    margin: 1px 0;
+    border-radius: var(--md-shape-full);
     cursor: pointer;
-    transition: color var(--t-hover);
-    color: var(--color-muted);
-    font-size: var(--fs-small);
+    color: var(--md-on-surface-variant);
+    font-size: var(--fs-label);
+    line-height: var(--lh-tight);
+    transition: color var(--md-duration-short), background-color var(--md-duration-short);
+}
+
+.subheader-item::before {
+    content: '';
+    position: absolute;
+    left: 33px;
+    top: 50%;
+    width: 2px;
+    height: 0;
+    border-radius: 1px;
+    background: var(--md-primary);
+    transform: translateY(-50%);
+    transition: height var(--md-duration-short) var(--md-easing-standard);
 }
 
 .subheader-item:hover {
-    color: var(--color-text);
+    color: var(--md-on-surface);
+    background: rgba(var(--md-on-surface-rgb), var(--md-state-hover));
 }
 
 .subheader-item.subheader-item-active {
-    color: var(--color-text);
-    font-weight: var(--fw-semibold);
+    color: var(--md-primary);
+    font-weight: var(--fw-medium);
 }
 
-/* Content panel */
+.subheader-item.subheader-item-active::before {
+    height: 16px;
+}
+
+/* Content: a scrolling surface with the page's cards in a readable column. */
 #content-panel {
     flex: 1;
-    /* Matches .section's bottom margin, so the frame around the stack reads
-       as the same gap that sits between its items. */
-    padding: var(--space-2);
+    min-width: 0;
+    padding: var(--space-4) var(--space-6) var(--space-6);
     overflow-y: auto;
-    background: var(--color-bg);
+    background: var(--md-surface);
     display: flex;
     flex-direction: column;
 }
@@ -288,64 +371,59 @@ body {
 
 .panel-content.active {
     display: block;
-    animation: fadeIn 0.2s;
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    animation: fadeIn var(--md-duration-medium) var(--md-easing-emphasized-decel);
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
 }
 
-/* h3 is the one heading level that gets uppercase; h4 and below differentiate
-   by size/weight/color instead so hierarchy doesn't rely on every level
-   shouting at the same volume. No rule glyph and no underline here - both are
-   the field label's job now (see label rule below), not the section title's. */
+/* Card title (M3 title-medium): sentence case, no shouting. */
 h3 {
-    color: var(--color-text);
+    color: var(--md-on-surface);
     font-size: var(--fs-heading);
-    font-weight: var(--fw-bold);
+    font-weight: var(--fw-medium);
+    line-height: var(--lh-tight);
+    letter-spacing: 0.1px;
     margin-top: var(--space-3);
     margin-bottom: var(--space-2);
-    text-transform: capitalize;
-    letter-spacing: 1px;
 }
 
 h3:first-child {
     margin-top: 0;
 }
 
+/* Subsection label inside a card (M3 title-small in the primary role). */
 h4 {
-    color: var(--color-text-secondary);
-    font-size: var(--fs-body);
+    color: var(--md-primary);
+    font-size: var(--fs-label);
     font-weight: var(--fw-semibold);
-    margin-top: var(--space-4);
+    letter-spacing: 0.3px;
+    margin-top: var(--space-5);
     margin-bottom: var(--space-2);
-    letter-spacing: 0.2px;
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 2px;
-}
-
-/* No h4:first-child reset here: .section > *:first-child already zeroes a
-   section's opening heading, and a blanket reset would also catch an h4 that
-   merely opens a toggle-group wrapper, where the subsection break is wanted. */
-
-/* A modal's own internal group heading (e.g. the import wizard's "Import into"/"Sections to
-   import") - larger than h4's 12px and no border, since a modal group isn't a tab subsection. */
-h4.modal-subheading {
-    font-size: var(--fs-heading);
-    font-weight: var(--fw-semibold);
-    border-bottom: none;
     padding-bottom: 0;
+    border-bottom: none;
 }
 
-/* Column headers sit at the top of a fresh grid column, not mid-flow,
-   so they get a smaller top margin than a full-width subsection break */
+/* No h4:first-child reset: .section > *:first-child already zeroes a card's opening
+   heading, and a blanket reset would also catch an h4 opening a toggle-group wrapper. */
+
+/* A dialog's own group heading (e.g. the import wizard's "Import into"). */
+h4.modal-subheading {
+    color: var(--md-on-surface);
+    font-size: var(--fs-body);
+    font-weight: var(--fw-medium);
+}
+
 .column > h4:first-child {
     margin-top: var(--space-2);
 }
 
-/* ASCII art and pre-formatted text. Generic monospace, not --font-mono:
-   Cascadia Code's programming ligatures can reflow ASCII art glyph runs. */
+/* ASCII art: generic monospace, not --font-mono - Cascadia's ligatures reflow glyph runs. */
 pre {
     font-family: monospace;
     line-height: 1.1;
@@ -360,9 +438,9 @@ pre {
     user-select: none;
     font-size: 10px;
     margin-bottom: 12px;
+    color: var(--md-primary);
 }
 
-/* Contributor names read as a block rather than one long column. */
 .credits-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -374,42 +452,41 @@ pre {
     grid-column: 1 / -1;
 }
 
-/* Paragraph spacing */
 p {
     margin: 6px 0;
     line-height: var(--lh-body);
     font-size: var(--fs-body);
 }
 
-/* Notification types table */
+/* Data tables (M3): outlined container, a tonal header row and hairline row dividers. */
 .notification-types-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    border: 1px solid var(--color-border);
-    background: var(--color-panel);
+    border: 1px solid var(--md-outline-variant);
+    border-radius: var(--md-shape-md);
+    overflow: hidden;
+    background: transparent;
     font-size: var(--fs-label);
     margin-top: var(--space-2);
 }
 
 .notification-types-table th {
-    background: var(--color-panel);
-    border-top: 1px solid var(--color-border);
-    border-right: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    padding: 4px 6px;
+    background: var(--md-surface-container-high);
+    border: none;
+    border-bottom: 1px solid var(--md-outline-variant);
+    padding: 8px 10px;
     text-align: center;
-    color: var(--color-text);
-    font-weight: 600;
-    letter-spacing: 0.3px;
+    color: var(--md-on-surface-variant);
+    font-weight: var(--fw-medium);
+    letter-spacing: 0.2px;
     line-height: 1.2;
     white-space: nowrap;
     position: sticky;
     z-index: var(--z-sticky);
 }
 
-/* Only the cells that actually carry a tooltip - the spanning group headers
-   above them explain nothing the sub-columns do not. */
+/* Only the cells that actually carry a tooltip. */
 .notification-types-table th[title] {
     cursor: help;
 }
@@ -420,9 +497,8 @@ p {
 }
 
 .notification-types-table thead tr:last-child:not(:first-child) th {
-    top: calc(1.2em + 10px);
-    font-weight: 500;
-    color: var(--color-text-secondary);
+    top: calc(1.2em + 16px);
+    font-weight: var(--fw-normal);
     border-top: none;
 }
 
@@ -436,15 +512,19 @@ p {
 }
 
 .notification-types-table td {
-    border: 1px solid var(--color-border-faint);
-    padding: 4px 3px;
+    border: none;
+    border-bottom: 1px solid var(--color-border-faint);
+    padding: 3px 10px;
     vertical-align: middle;
     text-align: center;
 }
 
+.notification-types-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
 .notification-types-table td.event-name-cell {
     text-align: left;
-    padding: 4px 6px;
 }
 
 .notification-types-table tbody tr {
@@ -452,15 +532,7 @@ p {
 }
 
 .notification-types-table tbody tr:hover {
-    background: var(--color-surface-alt);
-}
-
-.notification-types-table tbody tr:nth-child(even) {
-    background: var(--color-surface);
-}
-
-.notification-types-table tbody tr:nth-child(even):hover {
-    background: var(--color-surface-alt);
+    background: rgba(var(--md-on-surface-rgb), 0.05);
 }
 
 .notification-types-table .event-name {
@@ -530,12 +602,12 @@ p {
 }
 
 .notification-types-table td.category-cell {
-    background: var(--color-panel);
-    color: var(--color-text);
+    background: var(--md-surface-container);
+    color: var(--md-primary);
     text-align: center;
     padding: 8px 4px;
-    border-color: var(--color-border);
-    border-bottom: 1px solid var(--color-border);
+    border-right: 1px solid var(--md-outline-variant);
+    border-bottom: 1px solid var(--md-outline-variant);
     /* Pins the column to a fixed width regardless of content - large rowspans (as in the ore table, unlike notifications' short ones) can otherwise
        trip up auto table layout's handling of the vertical-rl label below, letting the column balloon to the label's unrotated horizontal width. */
     width: 28px;
@@ -575,9 +647,8 @@ p {
     white-space: nowrap;
 }
 
-/* Terminal-style form elements. Also the base .search-filter-input,
-   #profile-select and .cp-hex-input extend instead of re-declaring - see
-   their own rules below for what they override. */
+/* Outlined text fields (M3), desktop density. Also the base that .search-filter-input,
+   #profile-select and .cp-hex-input extend - see their own rules for what differs. */
 input[type="text"],
 input[type="number"],
 input[type="range"],
@@ -585,34 +656,59 @@ select,
 input.search-filter-input,
 #profile-select,
 .cp-hex-input {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    color: var(--color-text);
-    padding: 4px 8px;
-    font-family: var(--font-mono);
+    background-color: transparent;
+    border: 1px solid var(--md-outline);
+    color: var(--md-on-surface);
+    padding: 0 12px;
+    font-family: var(--font-sans);
     font-size: var(--fs-body);
     width: 100%;
     margin-bottom: var(--space-2);
     height: var(--control-h);
     box-sizing: border-box;
-    border-radius: var(--radius);
+    border-radius: var(--md-shape-xs);
+    transition: border-color var(--md-duration-short), box-shadow var(--md-duration-short), background-color var(--md-duration-short);
 }
 
-/* Custom-drawn like every other control, rather than the native popup arrow. */
+input[type="text"]:hover,
+input[type="number"]:hover,
+select:hover,
+.cp-hex-input:hover {
+    border-color: var(--md-on-surface);
+}
+
+input::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+}
+
+/* Number fields keep the stepper but drawn quietly. */
+input[type="number"]::-webkit-inner-spin-button {
+    opacity: 0.55;
+}
+
 select {
     appearance: none;
     -webkit-appearance: none;
-    background-image: linear-gradient(45deg, transparent 50%, var(--color-muted) 50%),
-        linear-gradient(135deg, var(--color-muted) 50%, transparent 50%);
-    background-position: right 11px top 12px, right 7px top 12px;
-    background-size: 4px 4px, 4px 4px;
+    background-color: transparent;
+    /* Drop-down arrow (M3 trailing icon). */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z' fill='%23d4c4b4'/%3E%3C/svg%3E");
+    background-position: right 6px center;
+    background-size: 20px 20px;
     background-repeat: no-repeat;
-    padding-right: 24px;
+    padding-right: 32px;
+    cursor: pointer;
+}
+
+select option {
+    background: var(--md-surface-container-high);
+    color: var(--md-on-surface);
 }
 
 input.recording {
-    background-color: rgba(var(--color-accent-rgb), 0.12);
-    border-color: var(--color-accent);
+    background-color: rgba(var(--md-primary-rgb), 0.12);
+    border-color: var(--md-primary);
+    box-shadow: inset 0 0 0 1px var(--md-primary);
 }
 
 input.hotkey-input {
@@ -626,76 +722,58 @@ input.hotkey-input.manual-editing {
 }
 
 input.manual-editing {
-    background-color: rgba(var(--color-success-rgb), 0.12);
-    border-color: var(--color-success);
+    background-color: rgba(var(--color-success-rgb), 0.1);
+    border-color: var(--md-success);
 }
 
-/* Momentary highlight after a number input is clamped to its min/max on blur.
-   Class is removed on a timer in JS; the transition here is what makes that
-   removal read as a fade instead of a snap. */
+/* Momentary highlight after a number input is clamped on blur; JS removes the class on
+   a timer and this transition turns that into a fade. */
 input.field-clamped {
-    border-color: var(--color-accent) !important;
-    background-color: rgba(var(--color-accent-rgb), 0.12);
+    border-color: var(--md-primary) !important;
+    background-color: rgba(var(--md-primary-rgb), 0.12);
     transition: border-color 1s ease-out, background-color 1s ease-out;
 }
 
-/* Reserved for real validation problems only (see also .status-message.error) -
-   kept a different hue from --color-destructive so "this value is invalid"
-   never reads the same as "this button deletes something". */
+/* Real validation problems only (M3 error role), never a destructive action's color. */
 input.hotkey-conflict {
-    border-color: var(--color-error) !important;
-    background-color: rgba(var(--color-error-rgb), 0.12);
+    border-color: var(--md-error) !important;
+    box-shadow: inset 0 0 0 1px var(--md-error);
+    background-color: rgba(var(--color-error-rgb), 0.08);
 }
 
+/* Focused outlined field: 2px primary outline, drawn inset so the layout doesn't shift. */
 input:focus-visible,
 select:focus-visible,
 input.search-filter-input:focus-visible,
 #profile-select:focus-visible,
-.cp-hex-input:focus-visible {
+.cp-hex-input:focus-visible,
+input[type="text"]:focus,
+input[type="number"]:focus {
     outline: none;
-    border-color: var(--color-accent);
+    border-color: var(--md-primary);
+    box-shadow: inset 0 0 0 1px var(--md-primary);
 }
 
+/* Field labels (M3 body-medium, on-surface-variant). */
 label {
-    color: var(--color-text-secondary);
-    font-weight: var(--fw-medium);
+    color: var(--md-on-surface-variant);
+    font-weight: var(--fw-normal);
     font-size: var(--fs-body);
     display: block;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     margin-top: 6px;
-    /* Matches the checkbox/radio label-body's 20px gutter (14px box + gap)
-       below, so a field label's text and a checkbox/radio's text start at the
-       same column. */
-    padding-left: 20px;
     position: relative;
-}
-
-label::before {
-    /* Fills the gutter above so a plain field label's text doesn't sit on
-       unexplained empty indent - a checkbox/radio row has its own glyph doing
-       that job instead, so it opts out below. No trailing space - the glyph's
-       own position (not text flow) sets its gap from the label text. */
-    content: '›';
-    color: var(--color-muted);
-    position: absolute;
-    left: 2px;
-}
-
-label:has(input[type="checkbox"])::before,
-label:has(input[type="radio"])::before {
-    content: none;
 }
 
 label:has(input[type="checkbox"]),
 label:has(input[type="radio"]) {
-    padding-left: 0;
-    /* Matches .binding-list's margin-bottom so a checkbox-to-checkbox gap
-       reads the same as a checkbox-to-field or field-to-field gap. */
-    margin-top: 8px;
-    margin-bottom: 8px;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    color: var(--md-on-surface);
 }
 
-/* Checkbox styling - terminal style */
+/* Switches (M3): every on/off setting. The native box stays in the DOM (focus, change
+   events, labels) and the track and handle are drawn on the label body. */
 input[type="checkbox"] {
     opacity: 0;
     position: absolute;
@@ -705,56 +783,69 @@ input[type="checkbox"] {
 
 input[type="checkbox"] + .label-body {
     position: relative;
-    padding-left: 20px;
-    cursor: pointer;
     display: inline-block;
+    min-height: 24px;
+    padding: 2px 0 2px 50px;
+    line-height: 20px;
+    cursor: pointer;
 }
 
+/* Track */
 input[type="checkbox"] + .label-body::before {
     content: '';
-    display: inline-block;
     position: absolute;
     left: 0;
-    top: 1px;
-    width: 14px;
-    height: 14px;
-    line-height: 14px;
-    text-align: center;
-    border: 1px solid var(--color-border-strong);
+    top: 0;
+    width: 40px;
+    height: 24px;
     box-sizing: border-box;
-    color: var(--color-accent-ink);
-    font-size: var(--fs-small);
-    border-radius: var(--radius-sm);
-    transition: border-color var(--t-hover), background-color var(--t-hover);
+    border-radius: var(--md-shape-full);
+    border: 2px solid var(--md-outline);
+    background: var(--md-surface-container-highest);
+    transition: background-color var(--md-duration-short) var(--md-easing-standard), border-color var(--md-duration-short);
 }
 
-/* Filled rather than an outline with a floating checkmark - a checked box
-   reads as "on" at a glance instead of needing the glyph to carry that alone. */
+/* Handle: small and outline-colored when off, grows and takes on-primary when on. */
+input[type="checkbox"] + .label-body::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--md-outline);
+    transition: transform var(--md-duration-medium) var(--md-easing-standard), width var(--md-duration-short),
+        height var(--md-duration-short), top var(--md-duration-short), left var(--md-duration-short), background-color var(--md-duration-short);
+}
+
 input[type="checkbox"]:checked + .label-body::before {
-    content: '✓';
-    background-color: var(--color-accent);
-    border-color: var(--color-accent);
+    background: var(--md-primary);
+    border-color: var(--md-primary);
 }
 
-/* A ring rather than a border tint: a checked box already carries the accent
-   border, so tinting it again would make focus invisible on exactly the boxes
-   most likely to have it. :focus-visible, not :focus, so a mouse click doesn't
-   ring it - matches every other control in the dialog. */
+input[type="checkbox"]:checked + .label-body::after {
+    left: 4px;
+    top: 4px;
+    width: 16px;
+    height: 16px;
+    background: var(--md-on-primary);
+    transform: translateX(16px);
+}
+
+label:hover input[type="checkbox"]:not(:checked) + .label-body::after {
+    background: var(--md-on-surface-variant);
+}
+
+label:hover input[type="checkbox"]:checked + .label-body::after {
+    background: var(--md-primary-container);
+}
+
 input[type="checkbox"]:focus-visible + .label-body::before {
-    outline: 1px solid var(--color-accent);
-    outline-offset: 1px;
+    box-shadow: var(--focus-ring);
 }
 
-/* Hover gets its own quieter affordance (text-secondary) rather than the
-   accent color reserved for checked/focus, so "hovered" and "confirmed"
-   don't look the same. */
-label:hover input[type="checkbox"] + .label-body::before {
-    border-color: var(--color-text-secondary);
-}
-
-/* Radio - same opacity-0-input + drawn-glyph mechanism as the checkbox above,
-   just round and dot-filled instead of boxed and check-filled. Only used in
-   the Import modal today. */
+/* Radio buttons (M3). */
 input[type="radio"] {
     opacity: 0;
     position: absolute;
@@ -764,96 +855,86 @@ input[type="radio"] {
 
 input[type="radio"] + .label-body {
     position: relative;
-    padding-left: 20px;
+    padding-left: 30px;
+    line-height: 20px;
     cursor: pointer;
     display: inline-block;
 }
 
 input[type="radio"] + .label-body::before {
     content: '';
-    display: inline-block;
     position: absolute;
     left: 0;
-    top: 1px;
-    width: 14px;
-    height: 14px;
+    top: 0;
+    width: 20px;
+    height: 20px;
     box-sizing: border-box;
-    border: 1px solid var(--color-border-strong);
+    border: 2px solid var(--md-on-surface-variant);
     border-radius: 50%;
-    transition: border-color var(--t-hover);
+    transition: border-color var(--md-duration-short), box-shadow var(--md-duration-short);
 }
 
 input[type="radio"]:checked + .label-body::before {
-    border-color: var(--color-accent);
-    /* Inset dot via a spread shadow rather than a second ::after - one layer
-       to keep in sync with the box above. */
-    box-shadow: inset 0 0 0 3px var(--color-accent);
+    border-color: var(--md-primary);
+    box-shadow: inset 0 0 0 3px var(--md-surface-container-high), inset 0 0 0 10px var(--md-primary);
 }
 
 input[type="radio"]:focus-visible + .label-body::before {
-    outline: 1px solid var(--color-accent);
-    outline-offset: 1px;
+    outline: 2px solid var(--md-primary);
+    outline-offset: 2px;
 }
 
-label:hover input[type="radio"] + .label-body::before {
-    border-color: var(--color-text-secondary);
+label:hover input[type="radio"]:not(:checked) + .label-body::before {
+    border-color: var(--md-on-surface);
 }
 
 input[type="radio"]:disabled + .label-body {
-    opacity: 0.5;
+    opacity: 0.38;
     cursor: not-allowed;
 }
 
-/* Native chrome (button face, drop shadow) can't be restyled away without a
-   full custom widget - drawn-glyph doesn't apply here the way it does above.
-   Only the frame and text match the theme. */
+/* Native file chrome can't be fully redrawn; the frame and button match the theme. */
 input[type="file"] {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    color: var(--color-text);
+    background-color: transparent;
+    border: 1px solid var(--md-outline);
+    color: var(--md-on-surface);
     padding: 4px 8px;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: var(--fs-body);
     width: 100%;
     box-sizing: border-box;
-    border-radius: var(--radius);
+    border-radius: var(--md-shape-xs);
 }
 
 input[type="file"]:focus-visible {
     outline: none;
-    border-color: var(--color-accent);
+    border-color: var(--md-primary);
 }
 
 input[type="file"]::file-selector-button {
-    background-color: var(--color-surface-alt);
-    border: 1px solid var(--color-border-strong);
-    color: var(--color-text);
-    padding: 3px 10px;
-    margin-right: 8px;
-    font-family: var(--font-mono);
+    background-color: var(--md-secondary-container);
+    border: none;
+    color: var(--md-on-secondary-container);
+    padding: 6px 14px;
+    margin-right: 10px;
+    font-family: var(--font-sans);
     font-size: var(--fs-label);
+    font-weight: var(--fw-medium);
     cursor: pointer;
-    border-radius: var(--radius-sm);
+    border-radius: var(--md-shape-full);
 }
 
-input[type="file"]::file-selector-button:hover {
-    border-color: var(--color-accent);
-}
-
-/* Disabled controls. .is-disabled is the class form for whole option groups
-   that JS greys out, so that stays styleable here instead of being written
-   as inline opacity/pointer-events. The notification table overrides the
-   opacity below - denser rows, so it dims harder. */
+/* Disabled: M3's 38% content opacity. .is-disabled greys out whole option groups. */
 input:disabled,
 select:disabled,
 button:disabled,
 .is-disabled {
-    opacity: 0.5;
+    opacity: 0.38;
     cursor: not-allowed;
 }
 
 input[type="checkbox"]:disabled + .label-body {
-    opacity: 0.5;
+    opacity: 0.38;
     cursor: not-allowed;
 }
 
@@ -861,45 +942,43 @@ input[type="checkbox"]:disabled + .label-body {
     pointer-events: none;
 }
 
+/* A requirement notice (e.g. "needs log monitoring"): tonal banner in the primary container. */
 .gate-notice {
     display: none;
     align-items: center;
     gap: var(--space-3);
-    padding: var(--space-3);
-    margin-bottom: var(--space-3);
-    border: 1px solid var(--color-accent);
-    border-radius: var(--radius-lg);
-    background: rgba(var(--color-accent-rgb), 0.12);
-    color: var(--color-text);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+    border: none;
+    border-radius: var(--md-shape-md);
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
 }
 
 .gate-notice.show {
     display: flex;
 }
 
+/* Supporting text (M3 body-small, on-surface-variant). */
 .hint {
-    color: var(--color-muted);
+    color: var(--md-on-surface-variant);
     font-size: var(--fs-label);
-    font-style: italic;
-    margin: 1px 0 2px;
+    font-style: normal;
+    line-height: var(--lh-body);
+    margin: 2px 0 4px;
+    opacity: 0.86;
 }
 
-/* The intro hint under a section/subsection heading gets the between-groups
-   gap rather than the tight 2px above - was 48 inline margin-bottom styles. */
 h3 + .hint,
 h4 + .hint,
 .section-heading + .hint {
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
 }
 
-/* Sibling margins collapse to the larger of the two, so .hint's own tight
-   top margin is otherwise masked by the heading/control's own margin-bottom
-   (--space-2) - shrink that margin specifically when a hint follows, rather
-   than everywhere, so unpaired headings/controls keep their normal rhythm. */
 h3:has(+ .hint),
 h4:has(+ .hint),
 .section-heading:has(+ .hint) {
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 input:has(+ .hint),
@@ -907,351 +986,430 @@ select:has(+ .hint) {
     margin-bottom: 2px;
 }
 
-/* A trailing hint after a control gets the same between-groups gap, whichever
-   control precedes it - Layout System and the overlay panels both trail a
-   hint after select/number/range instead of leading with one. */
 input + .hint,
 select + .hint {
     margin-top: var(--space-1);
 }
 
-/* Status message. display stays none until showStatus() sets it to flex -
-   align-items only takes effect on a flex box, so that JS-set value matters. */
+/* Status message: a snackbar in the inverse surface, shown by showStatus() (display:flex). */
 .status-message {
-    padding: 6px 10px;
+    padding: 0 16px;
     margin: 0;
     display: none;
     font-size: var(--fs-body);
-    border: 1px solid;
-    font-weight: var(--fw-medium);
-    height: var(--control-h);
+    border: none;
+    font-weight: var(--fw-normal);
+    min-height: var(--control-h);
     box-sizing: border-box;
     align-items: center;
-    /* var(--lh-tight) (1.2) leaves almost no slack under this fixed height
-       once the border and padding are subtracted - see .changes-pending. */
-    line-height: 1;
-    border-radius: var(--radius);
+    gap: var(--space-2);
+    line-height: var(--lh-tight);
+    border-radius: var(--md-shape-xs);
+    background: var(--md-inverse-surface);
+    color: var(--md-inverse-on-surface);
+    box-shadow: var(--md-elevation-3);
+    animation: snackbarIn var(--md-duration-medium) var(--md-easing-emphasized-decel);
 }
 
-.status-message.success {
-    color: var(--color-success);
-    border-color: var(--color-success);
-    background: rgba(var(--color-success-rgb), 0.1);
+.status-message::before {
+    content: '';
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--md-inverse-primary);
+}
+
+.status-message.success::before {
+    background: var(--md-success);
 }
 
 .status-message.error {
-    color: var(--color-error);
-    border-color: var(--color-error);
-    background: rgba(var(--color-error-rgb), 0.1);
+    background: var(--md-error-container);
+    color: var(--md-on-error-container);
 }
 
-.status-message.info {
-    color: var(--color-text-secondary);
-    border-color: var(--color-border-strong);
-    background: rgba(255, 255, 255, 0.04);
+.status-message.error::before {
+    background: var(--md-error);
 }
 
-/* Button overrides */
+@keyframes snackbarIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Buttons (M3). The plain button is a tonal button; .button-outline is outlined,
+   .button-primary is filled (one per context), destructive actions use the error roles.
+   State layers come from a ::after overlay so every variant gets the same hover/press feel. */
 button {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border-strong);
-    color: var(--color-text);
-    padding: 6px 12px;
-    font-family: var(--font-mono);
+    position: relative;
+    overflow: hidden;
+    background-color: var(--md-secondary-container);
+    border: none;
+    color: var(--md-on-secondary-container);
+    padding: 0 16px;
+    font-family: var(--font-sans);
     font-size: var(--fs-body);
-    cursor: pointer;
-    transition: background-color var(--t-hover), border-color var(--t-hover), color var(--t-hover);
     font-weight: var(--fw-medium);
+    letter-spacing: 0.1px;
+    cursor: pointer;
     height: var(--control-h);
-    line-height: var(--lh-body);
-    border-radius: var(--radius);
-    text-transform: capitalize;
-    letter-spacing: 0.5px;
+    line-height: var(--lh-tight);
+    border-radius: var(--md-shape-full);
+    transition: background-color var(--md-duration-short), color var(--md-duration-short), box-shadow var(--md-duration-short), border-color var(--md-duration-short);
 }
 
-button:hover {
-    background-color: var(--color-surface-alt);
-    color: var(--color-text);
-    border-color: var(--color-accent);
+button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--md-duration-short);
+}
+
+button:hover:not(:disabled)::after {
+    opacity: var(--md-state-hover);
+}
+
+button:active:not(:disabled)::after {
+    opacity: calc(var(--md-state-pressed) + 0.04);
 }
 
 button:focus-visible {
-    outline: none;
-    border-color: var(--color-accent);
-}
-
-button:active {
-    transform: scale(0.98);
+    outline: 2px solid var(--md-primary);
+    outline-offset: 2px;
 }
 
 .button-outline {
     background-color: transparent;
-    color: var(--color-muted);
+    border: 1px solid var(--md-outline);
+    color: var(--md-primary);
 }
 
 .button-outline:hover {
-    background-color: var(--color-surface);
-    color: var(--color-text);
-    border-color: var(--color-accent);
-}
-
-/* The default action in a footer or modal - the only button carrying the accent
-   in its resting state, so exactly one per context stands out. Outlined at rest
-   and filled on hover, which keeps the amber fill as the moment of interaction
-   rather than a permanent block of color. Bold plus amber text is what separates
-   it from a hovered plain button, which also takes an accent border. Hover is
-   specific enough to beat button:hover even while disabled, which would
-   otherwise turn a greyed-out primary back to the neutral surface. */
-.button-primary {
     background-color: transparent;
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-    font-weight: var(--fw-bold);
 }
 
-.button-primary:hover {
-    background-color: var(--color-accent-hover);
-    border-color: var(--color-accent-hover);
-    color: var(--color-accent-ink);
+.button-primary {
+    background-color: var(--md-primary);
+    color: var(--md-on-primary);
+    font-weight: var(--fw-semibold);
 }
 
-/* Destructive actions (delete/reset) get their own hue, distinct from
-   --color-error, so a validation problem never reads the same as a button
-   that permanently removes something. */
+.button-primary:hover:not(:disabled) {
+    box-shadow: var(--md-elevation-1);
+}
+
+.button-danger,
 .button-danger:hover {
-    background-color: var(--color-surface);
-    color: var(--color-destructive);
-    border-color: var(--color-destructive);
+    color: var(--md-error);
 }
 
-/* Fixed footer */
-/* Profile Header */
+.button-danger:not(.button-outline):not(.button-icon) {
+    background-color: rgba(var(--color-error-rgb), 0.12);
+}
+
+/* Top app bar: brand, the profile being edited with its actions, search, and the
+   preview app's connection status. */
 #profile-header {
-    height: 44px;
-    background: var(--color-panel);
-    border-bottom: 1px solid var(--color-border);
-    padding: 8px 12px;
+    height: 64px;
+    background: var(--md-surface-container-low);
+    padding: 0 var(--space-4) 0 var(--space-5);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--space-4);
     flex-shrink: 0;
 }
 
 #profile-header-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
+    min-width: 0;
 }
 
 #app-brand {
     display: flex;
-    align-items: baseline;
-    gap: 6px;
-    color: var(--color-text);
-    font-weight: var(--fw-semibold);
-    font-size: var(--fs-body);
-    letter-spacing: 0.2px;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--md-on-surface);
+    font-weight: var(--fw-medium);
+    font-size: 18px;
+    letter-spacing: 0;
     white-space: nowrap;
+    margin-right: var(--space-2);
 }
 
 #app-brand-mark {
-    color: var(--color-accent);
-    font-weight: var(--fw-bold);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--md-shape-md);
+    background: var(--md-primary-container);
+    color: var(--md-on-primary-container);
+}
+
+#app-brand-mark svg {
+    width: 22px;
+    height: 22px;
 }
 
 #profile-header-sep {
     width: 1px;
-    height: 16px;
-    background: var(--color-border);
+    height: 28px;
+    margin: 0 var(--space-2);
+    background: var(--md-outline-variant);
     flex-shrink: 0;
+}
+
+.profile-label {
+    color: var(--md-on-surface-variant);
+    font-size: var(--fs-label);
+    margin-right: 2px;
 }
 
 #profile-header-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-3);
+    min-width: 0;
 }
 
+/* Connection to the running preview app, as an assist chip. */
 .main-app-status {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: var(--fs-body);
-    letter-spacing: 0.3px;
-    color: var(--color-muted);
-    transition: color 0.3s;
+    height: 32px;
+    padding: 0 12px 0 10px;
+    border: 1px solid var(--md-outline-variant);
+    border-radius: var(--md-shape-sm);
+    font-size: var(--fs-label);
+    font-weight: var(--fw-medium);
+    color: var(--md-on-surface-variant);
+    white-space: nowrap;
+    transition: color 0.3s, background-color 0.3s, border-color 0.3s;
 }
 
 .main-app-status .indicator-dot {
     animation: none;
+    font-size: 10px;
 }
 
 .main-app-status.status-online {
-    color: var(--color-success);
+    color: var(--md-on-success-container);
+    background: var(--md-success-container);
+    border-color: transparent;
 }
 
 .main-app-status.status-online .indicator-dot {
+    color: var(--md-success);
     animation: pulse 2s ease-in-out infinite;
 }
 
-/* Same background as #profile-header - both are the dialog's chrome bars. */
+/* Bottom action bar: status on the left, unsaved-changes chip and the dialog actions on the right. */
 #footer {
-    height: 44px;
-    background: var(--color-panel);
-    border-top: 1px solid var(--color-border);
-    padding: 8px 12px;
+    height: 64px;
+    background: var(--md-surface-container-low);
+    padding: 0 var(--space-5);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--space-3);
     flex-shrink: 0;
 }
 
 #footer-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     flex: 1;
+    min-width: 0;
 }
 
+#footer-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+#footer-right > button {
+    min-width: 96px;
+}
+
+/* Search bar (M3): a full pill with a leading search icon. */
 #search-container {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
 }
 
 .search-input-wrapper {
     position: relative;
-    width: 180px;
+    width: 300px;
 }
 
-/* The Characters tab's search sits at the top of a section instead of a
-   fixed-width footer slot, so it takes the section's full width instead of
-   the footer search's fixed 180px. */
 .search-input-wrapper-wide {
     width: 100%;
 }
 
-/* Extends the shared control rule above; only what differs from it lives here. */
+#search-container .search-input-wrapper::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    background: var(--md-on-surface-variant);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5L21 21'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5L21 21'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
 input.search-filter-input {
-    padding: 6px 32px 6px 8px;
+    padding: 0 36px 0 12px;
     margin: 0;
-    transition: border-color var(--t-hover);
     line-height: normal;
 }
 
+#search-container input.search-filter-input {
+    height: 44px;
+    padding-left: 44px;
+    border: none;
+    border-radius: var(--md-shape-full);
+    background: var(--md-surface-container-high);
+}
+
+#search-container input.search-filter-input:hover {
+    background: var(--md-surface-container-highest);
+}
+
+#search-container input.search-filter-input:focus {
+    box-shadow: inset 0 0 0 2px var(--md-primary);
+}
+
 .search-filter-input::placeholder {
-    color: var(--color-muted);
+    color: var(--md-on-surface-variant);
 }
 
 .search-count {
-    font-size: var(--fs-body);
-    color: var(--color-muted);
-    min-width: 60px;
+    font-size: var(--fs-label);
+    color: var(--md-on-surface-variant);
+    min-width: 0;
     margin: 0;
+    white-space: nowrap;
 }
 
-/* Was inline #ff6b6b / #4a9eff - both left over from the abandoned
-   modern-blue theme, off this palette entirely. */
+.search-count:empty {
+    display: none;
+}
+
 .search-count-none {
-    color: var(--color-error);
+    color: var(--md-error);
 }
 
 .search-count-some {
-    color: var(--color-accent);
+    color: var(--md-primary);
 }
 
 .button-clear {
     position: absolute;
-    right: 5px;
-    top: 3px;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
     background: transparent;
     border: none;
-    color: var(--color-muted);
+    color: var(--md-on-surface-variant);
     padding: 0;
-    width: var(--control-h-dense);
-    height: var(--control-h-dense);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 14px;
-    font-family: var(--font-mono);
-    transition: color var(--t-hover), background var(--t-hover);
-    line-height: var(--control-h-dense);
+    font-size: 18px;
+    font-family: var(--font-sans);
+    line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     visibility: hidden;
 }
 
-/* visibility, not opacity - opacity:0 would still leave this in the tab
-   order with its focus ring rendering at zero opacity. */
+/* visibility, not opacity: opacity 0 would leave it in the tab order. */
 .search-filter-input:not(:placeholder-shown) ~ .button-clear {
     visibility: visible;
 }
 
 .button-clear:hover {
-    color: var(--color-text);
-    background: var(--color-surface-alt);
-    border-radius: var(--radius-sm);
+    color: var(--md-on-surface);
+    background: rgba(var(--md-on-surface-rgb), var(--md-state-hover));
 }
 
-.button-clear:active {
-    transform: scale(0.9);
-}
-
-/* Square icon button - shape only, so a refresh reads differently from a delete.
-   Explicit flex centering, not line-height alone - symbol glyphs (+, ⧉, ↺, ⇩, ↻)
-   sit at wildly different heights within their em box, so text-align plus a
-   line-height guess leaves some visibly off-center. Same mechanism as
-   .button-clear above. */
+/* Standard icon button (M3): 40px circle, icon in on-surface-variant, a state layer on hover.
+   The add/delete/reset/import variants only tint their icon on hover. */
 .button-icon {
-    width: var(--control-h);
+    width: 40px;
+    height: 40px;
     flex: none;
-    /* Asymmetric, not 0 - align-items:center centers the font's line box, and
-       most of these glyphs sit optically above that box's own center, which
-       reads as "too high". A couple px of top-only padding nudges the
-       flex-centered content down without moving the button's own border. */
-    padding: 2px 0 0;
-    font-size: 15px;
+    padding: 0;
+    font-size: 17px;
     line-height: 1;
-    color: var(--color-muted);
+    background: transparent;
+    color: var(--md-on-surface-variant);
+    border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
+.button-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.button-icon:hover {
+    color: var(--md-on-surface);
+}
+
 .button-icon-danger:hover {
-    color: var(--color-destructive);
-    border-color: var(--color-destructive);
-    background-color: var(--color-surface);
+    color: var(--md-error);
 }
 
 .button-icon-add:hover {
-    color: var(--color-success);
-    border-color: var(--color-success);
-    background-color: var(--color-surface);
+    color: var(--md-primary);
 }
 
 .button-icon-reset:hover {
     color: var(--color-purple);
-    border-color: var(--color-purple);
-    background-color: var(--color-surface);
 }
 
 .button-icon-import:hover {
     color: var(--color-sky);
-    border-color: var(--color-sky);
-    background-color: var(--color-surface);
 }
 
-/* Manual key-name entry toggle: advanced-mode only, sits next to Record/Clear */
+/* Inside cards and rows, icon buttons sit at control height. */
+.section .button-icon,
+.modal .button-icon {
+    width: var(--control-h);
+    height: var(--control-h);
+}
+
+/* Manual key-name entry toggle: advanced-mode only, next to Record/Clear. */
 .hotkey-edit-btn {
     width: var(--control-h);
     flex: none;
     padding: 0;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1;
-    color: var(--color-muted);
+    background: transparent;
+    color: var(--md-on-surface-variant);
+    border-radius: 50%;
     display: none;
 }
 
@@ -1260,125 +1418,116 @@ body.advanced-mode .hotkey-edit-btn {
 }
 
 .hotkey-edit-btn:hover {
-    color: var(--color-success);
-    border-color: var(--color-success);
-    background-color: var(--color-surface);
+    color: var(--md-success);
 }
 
 .hotkey-edit-btn.active {
-    color: var(--color-bg);
-    background-color: var(--color-success);
-    border-color: var(--color-success);
+    color: var(--md-on-success-container);
+    background-color: var(--md-success-container);
 }
 
-#footer-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
+/* Unsaved changes: a tonal chip in the primary container next to Save. */
 .changes-pending {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: var(--fs-body);
-    /* The label's inherited line-height (1.4) is taller than the room this
-       fixed-height pill leaves after its padding and border, so it centered
-       within a box bigger than itself and read as riding low. */
+    gap: 6px;
+    font-size: var(--fs-label);
+    font-weight: var(--fw-medium);
     line-height: 1;
-    color: var(--color-accent);
-    padding: 6px 8px;
-    border: 1px solid var(--color-accent);
-    border-radius: var(--radius-sm);
-    background: rgba(var(--color-accent-rgb), 0.1);
-    height: var(--control-h);
+    color: var(--md-on-primary-container);
+    padding: 0 12px;
+    border: none;
+    border-radius: var(--md-shape-sm);
+    background: var(--md-primary-container);
+    height: 32px;
     box-sizing: border-box;
-    animation: slideInFade 0.3s ease-in-out;
+    margin-right: var(--space-2);
+    animation: slideInFade var(--md-duration-medium) var(--md-easing-emphasized-decel);
 }
 
 .indicator-dot {
     animation: pulse 2s ease-in-out infinite;
-    font-size: var(--fs-small);
+    font-size: 10px;
     line-height: 1;
 }
 
 @keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.6;
-        transform: scale(1.2);
-    }
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
 }
 
 @keyframes slideInFade {
-    from {
-        opacity: 0;
-        transform: translateX(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
-/* Extends the shared control rule above; only what differs from it lives here. */
+/* The profile picker: a filled-tonal select pill in the app bar. */
 #profile-select {
-    min-width: 130px;
+    min-width: 168px;
+    height: 40px;
     line-height: normal;
-    margin: 0;
+    margin: 0 var(--space-1) 0 0;
     vertical-align: middle;
+    border: none;
+    border-radius: var(--md-shape-full);
+    padding-left: 16px;
+    background-color: var(--md-secondary-container);
+    color: var(--md-on-secondary-container);
+    font-weight: var(--fw-medium);
 }
 
-/* Scrollbar */
+#profile-select:hover {
+    background-color: var(--md-secondary-container-hover);
+}
+
+/* Scrollbars: thin, rounded, in the outline tone. */
+* {
+    scrollbar-color: var(--md-outline-variant) transparent;
+}
+
 ::-webkit-scrollbar {
-    width: 8px;
+    width: 12px;
+    height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--color-bg);
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--color-border-strong);
-    border: 1px solid var(--color-border);
+    background: var(--md-outline-variant);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: var(--md-shape-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-muted);
+    background: var(--md-outline);
+    background-clip: padding-box;
 }
 
-/* Section containers */
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Settings sections are M3 filled cards. */
 .section {
-    background-color: var(--color-panel);
-    border: 1px solid var(--color-border);
-    /* One step up from the 8px used everywhere else, so a section reads as a
-       container with interior space rather than as one more 8px increment. */
-    padding: var(--space-3);
-    /* Matches the panel frame around the stack, so the gap between sections
-       reads the same as the frame around the whole stack. */
-    margin-bottom: var(--space-2);
-    border-radius: var(--radius);
-    /* Leaves a gap above the section when jumped to via scrollIntoView, so its
-       top border/glow isn't flush against #content-panel's edge. */
-    scroll-margin-top: var(--space-2);
-}
-
-/* Highlights whichever section is currently in view (scrollspy) or was just
-   jumped to via a sidebar subheader. No timer: the transition just animates
-   in when the class is added and back out when it's removed as scroll moves
-   to a different section. */
-.section.section-active {
-    border-color: var(--color-accent);
+    background-color: var(--md-surface-container-low);
+    border: 1px solid transparent;
+    padding: var(--space-5) var(--space-6);
+    margin-bottom: var(--space-4);
+    border-radius: var(--md-shape-lg);
+    scroll-margin-top: var(--space-4);
     transition: border-color 0.4s ease-out;
 }
 
-/* A section's first and last child stack their own margins on top of
-   .section's 8px padding, so the top and bottom gaps end up wider than the
-   left and right. Zeroing them makes the padding read evenly on all four
-   sides. !important because many of these carry the margin inline. */
+/* The card in view (scrollspy) or just jumped to from the drawer. */
+.section.section-active {
+    border-color: rgba(var(--md-primary-rgb), 0.35);
+}
+
+/* A card's first and last child would stack their margins on the padding; zero them so the
+   padding reads evenly. !important because many of these carry the margin inline. */
 .section > *:first-child {
     margin-top: 0 !important;
 }
@@ -1393,15 +1542,16 @@ body.advanced-mode .hotkey-edit-btn {
 }
 
 a.external-link {
-    color: var(--color-accent);
-    text-decoration: underline;
+    color: var(--md-primary);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(var(--md-primary-rgb), 0.4);
 }
 
 a.external-link:hover {
-    color: var(--color-text);
+    border-bottom-color: var(--md-primary);
 }
 
-/* Advanced-only sections: hidden unless Advanced Mode is enabled */
+/* Advanced-only sections: hidden unless Advanced Mode is enabled. */
 .advanced-section {
     display: none;
 }
@@ -1410,7 +1560,7 @@ body.advanced-mode .advanced-section {
     display: block;
 }
 
-/* Advanced-only tabs (e.g. General): hide the sidebar entry and its panel entirely */
+/* Advanced-only pages: hide the drawer entry and its page entirely. */
 .advanced-tab {
     display: none;
 }
@@ -1436,21 +1586,20 @@ body:not(.advanced-mode) .panel-content.advanced-tab-panel {
     margin-top: var(--space-2);
 }
 
-/* Buttons sharing one line. Column count comes from the child count, so a row
-   never restates it. Same 8px as .field-row - both are single-line control rows. */
+/* Buttons sharing one line; the column count comes from the child count. */
 .button-row {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
     gap: var(--space-2);
-    margin-top: var(--space-2);
+    margin-top: var(--space-3);
 }
 
-/* Like .button-row, but a trailing square icon button keeps its own width instead of taking an equal column. */
+/* Like .button-row, but a trailing icon button keeps its own width. */
 .button-row-flex {
     display: flex;
     gap: var(--space-2);
-    margin-top: var(--space-2);
+    margin-top: var(--space-3);
 }
 
 .button-row-flex > button:not(.button-icon) {
@@ -1876,6 +2025,7 @@ label + .binding-list {
     justify-content: space-between;
     gap: 8px;
     margin-bottom: 8px;
+    min-height: 28px;
 }
 
 .section-heading > h3 {
@@ -1888,73 +2038,78 @@ label + .binding-list {
     gap: 6px;
 }
 
+/* "?" toggles a card's extra hints: a small tonal icon button. */
 .button-icon.hint-toggle {
-    width: auto;
-    height: auto;
-    position: relative;
-    top: -2px;
-    padding: 1px 5px;
-    font-size: var(--fs-micro);
-    line-height: var(--lh-body);
+    width: 28px;
+    height: 28px;
+    position: static;
+    padding: 0;
+    font-size: var(--fs-small);
+    font-weight: var(--fw-semibold);
+    line-height: 1;
     background: transparent;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    color: var(--md-on-surface-variant);
+    border: 1px solid var(--md-outline-variant);
+    border-radius: 50%;
 }
 
 .button-icon.hint-toggle:hover {
-    background: transparent;
-    border-color: var(--color-accent);
-    color: var(--color-accent);
+    color: var(--md-primary);
+    border-color: var(--md-outline);
 }
 
 .button-icon.hint-toggle:active,
 .button-icon.hint-toggle.hint-toggle-active {
-    transform: none;
-    background: var(--color-accent);
-    border-color: var(--color-accent);
-    color: var(--color-accent-ink);
+    background: var(--md-secondary-container);
+    border-color: transparent;
+    color: var(--md-on-secondary-container);
 }
 
-/* Inset rather than an outer glow so it doesn't grow past the badge next to it. */
 .hint-toggle:focus-visible {
-    box-shadow: var(--focus-ring-inset);
+    box-shadow: var(--focus-ring);
 }
 
 .hint-extra {
     display: none;
-    color: var(--color-muted);
+    color: var(--md-on-surface-variant);
     font-size: var(--fs-label);
-    font-style: italic;
-    margin: 1px 0 4px;
+    font-style: normal;
+    opacity: 0.86;
+    margin: 2px 0 6px;
 }
 
 .section.hints-visible .hint-extra {
     display: block;
 }
 
-/* .binding-list, .binding-list-compact and .detail-form are 2-column grids and
-   their row wrappers use display:contents, so a trailing hint-extra needs an
-   explicit span or it lands narrow in column 1. */
+/* .binding-list, .binding-list-compact and .detail-form are 2-column grids whose row
+   wrappers use display:contents, so a trailing hint-extra needs an explicit span. */
 .binding-list > .hint-extra,
 .binding-list-compact > .hint-extra,
 .detail-field > .hint-extra {
     grid-column: 1 / -1;
 }
 
-/* Scope, said once per section instead of in every hint: which file a binding
-   is saved to, and so whether switching profiles changes it. */
+/* Scope (which file a setting is saved to), said once per card: a small suggestion chip. */
 .scope-chip {
     flex: none;
-    position: relative;
-    top: -2px;
-    padding: 1px 5px;
+    position: static;
+    display: inline-block;
+    height: 24px;
+    line-height: 22px;
+    box-sizing: border-box;
+    padding: 0 10px;
     font-size: var(--fs-micro);
     font-weight: var(--fw-medium);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    text-transform: none;
+    color: var(--md-on-surface-variant);
+    border: 1px solid var(--md-outline-variant);
+    border-radius: var(--md-shape-sm);
+}
+
+.scope-chip::first-letter {
     text-transform: uppercase;
-    color: var(--color-muted);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
 }
 
 .field {
@@ -1993,30 +2148,31 @@ label + .binding-list {
     gap: 4px;
 }
 
-/* Color input styling */
+/* Color swatches: a rounded tile inside an outlined frame. */
 input[type="color"] {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
     height: var(--control-h);
     width: var(--control-h);
-    padding: 3px;
+    padding: 4px;
     cursor: pointer;
-    border: 1px solid var(--color-border-strong);
-    background-color: var(--color-surface);
+    border: 1px solid var(--md-outline-variant);
+    background-color: transparent;
     box-sizing: border-box;
-    border-radius: var(--radius);
+    border-radius: var(--md-shape-sm);
     transition: border-color var(--t-hover) ease;
 }
 
 input[type="color"]:hover {
     outline: none;
-    border-color: var(--color-accent);
+    border-color: var(--md-outline);
 }
 
 input[type="color"]:focus-visible {
     outline: none;
-    border-color: var(--color-accent);
+    border-color: var(--md-primary);
+    box-shadow: inset 0 0 0 1px var(--md-primary);
 }
 
 input[type="color"]::-webkit-color-swatch-wrapper {
@@ -2025,10 +2181,12 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 
 input[type="color"]::-webkit-color-swatch {
     border: none;
+    border-radius: var(--md-shape-xs);
 }
 
 input[type="color"]::-moz-color-swatch {
     border: none;
+    border-radius: var(--md-shape-xs);
 }
 
 /* Wraps optional/override swatches (see data-optional-color) so the "not set"
@@ -2078,7 +2236,7 @@ input[type="color"]::-moz-color-swatch {
 .color-with-hex {
     display: flex;
     gap: 8px;
-    width: 160px;
+    width: 172px;
     max-width: 100%;
 }
 
@@ -2092,6 +2250,9 @@ input[type="color"]::-moz-color-swatch {
     max-width: none;
     min-width: 0;
     margin-bottom: 0;
+    padding: 0 8px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
     text-transform: uppercase;
 }
 
@@ -2214,90 +2375,110 @@ input[type="color"]::-moz-color-swatch {
 }
 
 /* Range slider styling */
+/* Slider (M3): a 4px track filled up to the value via --range-fill (set from the value
+   where scripts provide it; otherwise the whole track reads inactive) and a 20px handle. */
 input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
-    /* Resets the border/padding inherited from the shared control rule above,
-       which would otherwise pack 1px of border and 4px of padding into a 6px
-       box. Track fill is --color-border so the groove still reads without one. */
     border: none;
     padding: 0;
-    background: var(--color-border);
+    height: 20px;
+    background: transparent;
     outline: none;
-    height: 6px;
-    border-radius: var(--radius);
+    cursor: pointer;
 }
 
-/* border:none above kills the shared input:focus-visible border-color cue,
-   and the track is too thin for a box-shadow glow to read - an outline drawn
-   outside the track is what every other range implementation does, so it's
-   what shows up here instead of nothing. */
+input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: var(--md-shape-full);
+    background: linear-gradient(to right, var(--md-primary) var(--range-fill, 0%), var(--md-secondary-container) var(--range-fill, 0%));
+}
+
+input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: var(--md-shape-full);
+    background: var(--md-secondary-container);
+}
+
+input[type="range"]::-moz-range-progress {
+    height: 4px;
+    border-radius: var(--md-shape-full);
+    background: var(--md-primary);
+}
+
 input[type="range"]:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 3px;
+    outline: none;
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 10px rgba(var(--md-primary-rgb), 0.16);
 }
 
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 16px;
-    height: 16px;
-    background: var(--color-accent);
+    width: 20px;
+    height: 20px;
+    margin-top: -8px;
+    background: var(--md-primary);
     cursor: pointer;
-    border: 1px solid var(--color-border-strong);
+    border: none;
     border-radius: 50%;
+    box-shadow: var(--md-elevation-1);
+    transition: box-shadow var(--md-duration-short);
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+    box-shadow: 0 0 0 10px rgba(var(--md-primary-rgb), 0.08);
 }
 
 input[type="range"]::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: var(--color-accent);
+    width: 20px;
+    height: 20px;
+    background: var(--md-primary);
     cursor: pointer;
-    border: 1px solid var(--color-border-strong);
+    border: none;
     border-radius: 50%;
 }
 
-/* Character accordion styles */
+/* Expansion panels (M3): outlined, the open one lifts to surface-container. */
 .accordion {
-    border: 1px solid var(--color-border);
-    /* Full-width left rail at the same 2px as .tab-item/.roster-row, so the
-       expanded state below only has to change its color - not its width,
-       which would shift the row. Not transparent: unlike those two, this
-       element has a border box to complete. */
-    border-left: 2px solid var(--color-border);
+    border: 1px solid var(--md-outline-variant);
     margin-bottom: 8px;
-    border-radius: var(--radius-lg);
+    border-radius: var(--md-shape-md);
     overflow: hidden;
+    transition: background-color var(--md-duration-short);
 }
 
 .accordion.expanded {
-    border-left-color: var(--color-accent);
+    background: var(--md-surface-container);
+    border-color: transparent;
 }
 
 .accordion-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px;
-    background: var(--color-surface);
+    min-height: 44px;
+    padding: 4px 12px 4px 16px;
+    background: transparent;
     cursor: pointer;
     transition: background var(--t-hover);
 }
 
 .accordion-header:hover {
-    background: var(--color-surface-alt);
+    background: rgba(var(--md-on-surface-rgb), var(--md-state-hover));
 }
 
 .accordion-header:focus-visible {
     outline: none;
-    background: var(--color-surface-alt);
     box-shadow: var(--focus-ring-inset);
 }
 
 .accordion-title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex: 1;
 }
 
@@ -2305,48 +2486,49 @@ input[type="range"]::-moz-range-thumb {
     width: 32px;
     height: 32px;
     object-fit: cover;
-    border: 1px solid var(--color-border);
-    background: var(--color-bg);
+    border: none;
+    border-radius: 50%;
+    background: var(--md-surface-container-highest);
     flex-shrink: 0;
 }
 
-/* One › rotated on expand, rather than swapping between two unrelated arrow
-   glyphs - matches the single marker used for headings, labels and lists.
-   inline-block because transforms don't apply to inline elements. */
+/* Expand indicator: a chevron that turns over when open. */
 .accordion-toggle {
-    font-family: var(--font-mono);
-    font-size: 14px;
-    color: var(--color-muted);
+    width: 20px;
+    height: 20px;
+    color: var(--md-on-surface-variant);
     user-select: none;
     display: inline-block;
-    transition: transform var(--t-hover);
+    transition: transform var(--md-duration-medium) var(--md-easing-standard);
 }
 
 .accordion-toggle::before {
-    content: '›';
+    content: '';
+    display: block;
+    width: 20px;
+    height: 20px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 .accordion.expanded .accordion-toggle {
-    transform: rotate(90deg);
+    transform: rotate(180deg);
 }
 
-/* Declared, not inherited: body's size + 700 would render this identically to
-   an h3, so a row inside a section would match the section's own heading.
-   Matches .roster-name - same concept, same size. */
 .accordion-name {
-    font-size: 12px;
-    font-weight: 700;
+    font-size: var(--fs-body);
+    font-weight: var(--fw-medium);
 }
 
 .accordion-content {
-    padding: 8px;
+    padding: 4px 16px 16px;
     display: none;
 }
 
 .accordion.expanded .accordion-content {
     display: block;
 }
-
 
 /* Drag-to-reorder handle. Always paired with .drag-index-chip on the same
    element (see config_dialog.js) - that rule comes later in the cascade and
@@ -2410,27 +2592,28 @@ input[type="range"]::-moz-range-thumb {
     min-height: 0;
 }
 
+/* Master list (characters, events): an M3 list in an outlined container, the selected row
+   in secondary-container like the drawer's active item. */
 .roster {
-    width: 190px;
+    width: 200px;
     flex-shrink: 0;
     overflow-y: auto;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    padding: 4px;
+    border: 1px solid var(--md-outline-variant);
+    border-radius: var(--md-shape-md);
 }
 
 /* Portraits are hidden for now, and rows no longer need to make room for one. */
 #charactersList .roster {
-    width: 175px;
+    width: 190px;
 }
 
 #hotkeyGroupsList .master-detail {
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
 }
 
-/* Only a handful of profiles are expected, so the roster reads better as a
-   row of separate boxed chips (matching the dialog's other bordered panels)
-   than a vertical list. */
+/* Only a handful of groups are expected, so they're a row of filter chips. */
 #hotkeyGroupsList .roster {
     display: flex;
     width: auto;
@@ -2438,73 +2621,84 @@ input[type="range"]::-moz-range-thumb {
     flex-wrap: wrap;
     align-items: center;
     overflow: visible;
+    padding: 0;
     border: none;
     border-radius: 0;
-    gap: 6px;
+    gap: 8px;
 }
 
 #hotkeyGroupsList .roster-row {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface);
-    font-weight: var(--fw-bold);
-    letter-spacing: 0.5px;
+    height: 32px;
+    padding: 0 16px;
+    margin: 0;
+    border: 1px solid var(--md-outline-variant);
+    border-radius: var(--md-shape-sm);
+    background: transparent;
+    color: var(--md-on-surface-variant);
+    font-weight: var(--fw-medium);
 }
 
 #hotkeyGroupsList .roster-row:hover {
-    border-color: var(--color-border-strong);
+    background: rgba(var(--md-on-surface-rgb), var(--md-state-hover));
 }
 
 #hotkeyGroupsList .roster-row.selected {
-    background: var(--color-surface-alt);
-    border-color: var(--color-accent);
+    background: var(--md-secondary-container);
+    border-color: transparent;
+    color: var(--md-on-secondary-container);
+}
+
+#hotkeyGroupsList .roster-row.selected::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    margin-left: -4px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 #hotkeyGroupsList .roster-name {
-    max-width: 160px;
+    max-width: 180px;
 }
 
-/* Plain button (not a tab chip) so it reads as an action, not another profile. */
+/* A plain button (not a chip) so it reads as an action, not another group. */
 #hotkeyGroupsList .hkgroup-tab-add {
     margin-left: 4px;
+    height: 32px;
 }
 
 .roster-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 8px 6px 6px;
-    border-bottom: 1px solid var(--color-border-faint);
-    border-left: 2px solid transparent;
+    gap: 8px;
+    min-height: 36px;
+    padding: 4px 12px 4px 10px;
+    margin: 1px 0;
+    border: none;
+    border-radius: var(--md-shape-sm);
     cursor: pointer;
-    color: var(--color-muted);
-}
-
-.roster-row:last-child {
-    border-bottom: none;
+    color: var(--md-on-surface-variant);
+    transition: background-color var(--md-duration-short), color var(--md-duration-short);
 }
 
 .roster-row:hover {
-    background: var(--color-surface);
-    color: var(--color-text);
+    background: rgba(var(--md-on-surface-rgb), var(--md-state-hover));
+    color: var(--md-on-surface);
 }
 
 .roster-row.selected {
-    background: var(--color-surface);
-    color: var(--color-text);
-    border-left-color: var(--color-accent);
+    background: var(--md-secondary-container);
+    color: var(--md-on-secondary-container);
 }
 
 .roster-row.selected .roster-name {
-    font-weight: 700;
+    font-weight: var(--fw-semibold);
 }
 
-/* Same inset amber as .tab-item and .accordion-header - these rows are the
-   third div-acting-as-a-control in the dialog and should focus alike. */
 .roster-row:focus-visible {
     outline: none;
-    background: var(--color-surface);
-    color: var(--color-text);
+    color: var(--md-on-surface);
     box-shadow: var(--focus-ring-inset);
 }
 
@@ -2515,15 +2709,15 @@ input[type="range"]::-moz-range-thumb {
 
 .roster-name {
     flex: 1;
-    font-size: 12px;
+    font-size: var(--fs-body);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .roster-hotkey-badge {
-    font-size: 10px;
-    color: var(--color-muted);
+    font-size: var(--fs-micro);
+    color: var(--md-on-surface-variant);
     white-space: nowrap;
 }
 
@@ -2533,7 +2727,7 @@ input[type="range"]::-moz-range-thumb {
 
 .roster-row.roster-row-empty:hover {
     background: none;
-    color: var(--color-muted);
+    color: var(--md-on-surface-variant);
 }
 
 .roster-row.dragging {
@@ -2542,20 +2736,21 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .roster-row.drag-over-top {
-    box-shadow: inset 0 2px 0 var(--color-accent);
+    box-shadow: inset 0 2px 0 var(--md-primary);
 }
 
 .roster-row.drag-over-bottom {
-    box-shadow: inset 0 -2px 0 var(--color-accent);
+    box-shadow: inset 0 -2px 0 var(--md-primary);
 }
 
 .detail-stack {
     flex: 1;
     min-width: 0;
     overflow-y: auto;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: 8px;
+    border: none;
+    background: var(--md-surface-container);
+    border-radius: var(--md-shape-md);
+    padding: 16px;
 }
 
 .detail-panel {
@@ -2564,16 +2759,16 @@ input[type="range"]::-moz-range-thumb {
 
 .detail-panel.active {
     display: block;
-    animation: fadeIn 0.15s;
+    animation: fadeIn var(--md-duration-short);
 }
 
 .detail-panel-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--md-outline-variant);
 }
 
 /* Keeps every input cue - border, background, caret - so it still reads as a
@@ -2610,7 +2805,8 @@ input[type="range"]::-moz-range-thumb {
    or hotkey group's name). */
 #notificationTypesList .detail-panel-name-label {
     font-size: var(--fs-heading);
-    font-weight: var(--fw-bold);
+    font-weight: var(--fw-medium);
+    color: var(--md-on-surface);
 }
 
 /* Sits on the row rather than above its field, so it drops the stacking margins
@@ -2726,7 +2922,7 @@ input[type="range"]::-moz-range-thumb {
 /* Narrower than the default 160px .color-with-hex - these rows sit one to a
    line under a shared "Colors" heading instead of owning a full form row. */
 .detail-color-rows .color-with-hex {
-    width: 110px;
+    width: 148px;
 }
 
 /* Button labels here run long ("Save Current Position"), and .field-row is
@@ -2960,7 +3156,7 @@ button.confirm-delete:hover {
     color: #ffffff !important;
 }
 
-/* Modal Dialog */
+/* Dialogs (M3): scrim, extra-large corners, surface-container-high, headline + actions. */
 .modal {
     display: none;
     position: fixed;
@@ -2969,9 +3165,13 @@ button.confirm-delete:hover {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    animation: fadeIn 0.2s ease-in;
+    background-color: var(--md-scrim);
+    animation: scrimIn var(--md-duration-medium) ease-out;
+}
+
+@keyframes scrimIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .modal.show {
@@ -2985,48 +3185,42 @@ button.confirm-delete:hover {
 }
 
 .modal-content {
-    background: var(--color-panel);
-    border: 1px solid var(--color-border-strong);
-    padding: 16px;
-    width: 380px;
+    background: var(--md-surface-container-high);
+    border: none;
+    padding: var(--space-6);
+    width: 400px;
     max-width: 90%;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-modal);
-    animation: slideIn 0.2s ease-out;
+    border-radius: var(--md-shape-xl);
+    box-shadow: var(--md-elevation-3);
+    animation: slideIn var(--md-duration-medium) var(--md-easing-emphasized-decel);
     position: relative;
 }
 
 .modal-content.modal-wide {
-    width: 560px;
-    max-height: 96vh;
+    width: 600px;
+    max-height: 92vh;
     overflow-y: auto;
     text-align: left;
 }
 
+/* Headline-small. */
 .modal-content h3 {
-    margin: 0 0 var(--space-3) 0;
+    margin: 0 0 var(--space-4) 0;
+    font-size: 22px;
+    font-weight: var(--fw-normal);
+    line-height: 1.3;
 }
 
-/* Matches the tight h3-to-hint gap every section uses (h3:has(+ .hint) above) - the import
-   modal's own hint is one div deeper, past what that adjacent-sibling selector can reach. */
 #import-settings-modal > .modal-content > h3 {
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
-/* This label sits above its own select like a group heading, not a checkbox/radio's inline
-   text, so it drops the field-label chevron the same way those already do. */
 #importSourceProfileRow > label,
 #importBackupsSection > label {
     padding-left: 0;
 }
 
-#importSourceProfileRow > label::before,
-#importBackupsSection > label::before {
-    content: none;
-}
-
-/* Two columns and its own scroll region (this list is often a dozen-plus entries) so a long
-   list scrolls in place instead of pushing the whole modal past viewport height. */
+/* Two columns and its own scroll region (often a dozen-plus entries). */
 #importSectionsList {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -3034,8 +3228,8 @@ button.confirm-delete:hover {
     align-content: start;
     max-height: 380px;
     overflow-y: auto;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--md-outline-variant);
+    border-radius: var(--md-shape-md);
     padding: var(--space-2) var(--space-3);
 }
 
@@ -3058,6 +3252,7 @@ button.confirm-delete:hover {
     display: flex;
     gap: var(--space-2);
     justify-content: flex-end;
+    margin-top: var(--space-5);
 }
 
 /* Shared with .button-remove, so a Remove reads the same width in a flat row,
@@ -3812,47 +4007,202 @@ button.confirm-delete:hover {
     min-height: 360px;
 }
 
-/* AI Layout: classic tabs and their (now mostly emptied) panels are hidden while the AI tabs are shown. */
-body.ai-layout .tab-item:not(.ai-tab),
-body.ai-layout .panel-content:not(.ai-panel) {
-    display: none !important;
-}
-
-/* Hotkey Groups keeps its own full-height tab in the AI layout too (see the classic hotkey-groups rules). */
-.panel-content[data-panel="ai-groups"].active {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-}
-
-.panel-content[data-panel="ai-groups"] .section {
-    flex: 1;
-    min-height: 0;
-    margin-bottom: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.layout-toggle-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    margin-top: var(--space-2);
-}
-
-.layout-toggle-row > button {
-    flex: none;
-}
-
-.layout-toggle-hint {
-    font-size: var(--fs-label);
-    color: var(--color-muted);
-}
-
 /* An Empty region that takes leftovers is in use, so it drops the empty (dashed) look. */
 .display-region-cell.kind-Empty.takes-leftovers {
     background: var(--color-surface);
     border-style: solid;
     color: var(--color-text-secondary);
+}
+
+/* ---- Window theme picker (Preferences > Theme) ------------------------------------------------------------------
+   M3's wallpaper-style picker: each card is a disc split into the theme's primary (top), secondary container and
+   tertiary (bottom halves) on the theme's own surface, so a card previews the scheme rather than just naming it. */
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+}
+
+.theme-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-2);
+    border-radius: var(--md-shape-lg);
+    background: var(--md-surface-container);
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+    cursor: pointer;
+    transition: background var(--md-duration-short) var(--md-easing-standard), outline-color var(--md-duration-short) var(--md-easing-standard);
+}
+
+.theme-card:hover {
+    background: var(--md-surface-container-high);
+}
+
+.theme-card:has(input:checked) {
+    outline-color: var(--md-primary);
+    background: var(--md-surface-container-high);
+}
+
+.theme-card:has(input:focus-visible) {
+    box-shadow: var(--focus-ring);
+}
+
+/* The radio stays in the tab order and form for keyboard use and change tracking; the card is its visual. */
+.theme-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    margin: 0;
+}
+
+.theme-preview {
+    --tp-primary: var(--md-outline);
+    --tp-secondary: var(--md-surface-container-highest);
+    --tp-tertiary: var(--md-outline-variant);
+    --tp-surface: var(--md-surface-container-low);
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: var(--tp-surface);
+    box-shadow: inset 0 0 0 1px rgba(var(--md-on-surface-rgb), 0.08);
+}
+
+.theme-preview::before {
+    content: '';
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background:
+        linear-gradient(to bottom, var(--tp-primary) 50%, transparent 50%),
+        linear-gradient(to right, var(--tp-secondary) 50%, var(--tp-tertiary) 50%);
+}
+
+/* Custom with no usable primary yet: a dashed outline where the disc goes. */
+.theme-preview.is-empty::before {
+    background: none;
+    border: 2px dashed var(--md-outline);
+}
+
+/* Check badge on the selected theme's disc. */
+.theme-preview-dot {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--md-primary-container);
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity var(--md-duration-short) var(--md-easing-standard), transform var(--md-duration-short) var(--md-easing-emphasized-decel);
+}
+
+.theme-preview-dot::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    background: var(--md-on-primary-container);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.theme-card:has(input:checked) .theme-preview-dot {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.theme-name {
+    font-size: var(--fs-label);
+    font-weight: var(--fw-medium);
+    color: var(--md-on-surface-variant);
+    text-align: center;
+    line-height: var(--lh-tight);
+}
+
+.theme-card:has(input:checked) .theme-name {
+    color: var(--md-on-surface);
+}
+
+/* Custom theme editor: a tonal panel under the grid, one row per seed. */
+.theme-custom {
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    border-radius: var(--md-shape-lg);
+    background: var(--md-surface-container);
+}
+
+.theme-custom[hidden] {
+    display: none;
+}
+
+.theme-custom > .hint {
+    margin-top: 0;
+}
+
+.theme-seed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-3) var(--space-4);
+    margin-top: var(--space-3);
+}
+
+.theme-seed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+}
+
+.theme-seed > label {
+    font-size: var(--fs-label);
+    font-weight: var(--fw-medium);
+    color: var(--md-on-surface-variant);
+}
+
+.theme-seed-field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.theme-seed-field input[type="color"] {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* An empty optional seed shows the color derived for it, ringed dashed to read as automatic. */
+.theme-seed.is-auto input[type="color"] {
+    outline: 2px dashed var(--md-outline);
+    outline-offset: 2px;
+}
+
+.theme-seed-field input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-mono);
+}
+
+.theme-seed-field input[type="text"][aria-invalid="true"] {
+    border-color: var(--md-error);
+    box-shadow: inset 0 0 0 1px var(--md-error);
+}
+
+.theme-seed-error {
+    margin: 0;
+    font-size: var(--fs-small);
+    color: var(--md-error);
+}
+
+.theme-seed-error[hidden] {
+    display: none;
 }

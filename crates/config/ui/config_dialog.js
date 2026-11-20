@@ -147,9 +147,17 @@ const DEFAULT_ACCENT_COLOR_HTML = '#d9a441';
 
 // Retints the dialog's --color-accent* CSS variables from the active profile's accentColor
 // (or, when previewing a not-yet-saved pick, overrideZig), so every profile can carry its own chrome color.
+// A profile left on the stock accent follows the window theme instead (the CSS maps --color-accent* onto the
+// theme's primary), so a faction theme isn't streaked with the stock amber.
 function applyAccentColorTheme(overrideZig) {
     const accentZig = overrideZig || (currentConfig && currentConfig.accentColor) || (defaultConfig && defaultConfig.accentColor);
     const hex = zigColorToHtml(accentZig || htmlColorToZig(DEFAULT_ACCENT_COLOR_HTML));
+
+    const root = document.documentElement.style;
+    if (hex.toLowerCase() === DEFAULT_ACCENT_COLOR_HTML) {
+        ['--color-accent', '--color-accent-hover', '--color-accent-rgb', '--color-accent-ink'].forEach(p => root.removeProperty(p));
+        return;
+    }
 
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -159,11 +167,306 @@ function applyAccentColorTheme(overrideZig) {
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     const inkHex = luminance > 0.55 ? '#1a1408' : '#f5f0e6';
 
-    const root = document.documentElement.style;
     root.setProperty('--color-accent', hex);
     root.setProperty('--color-accent-hover', hoverHex);
     root.setProperty('--color-accent-rgb', `${r}, ${g}, ${b}`);
     root.setProperty('--color-accent-ink', inkHex);
+}
+
+// ---------------------------------------------------------------------------------------------- window themes --
+// A theme is up to four seed colors, each grown into a Material 3 tonal palette. Hue and chroma come from the seed in
+// OKLCH (which holds hue steady as lightness changes); "tone" is CIE L*, the lightness scale M3 itself uses, so the
+// tone pairs in UI_THEME_ROLES keep M3's text/background contrast whatever colors go in. Chroma is reduced where a
+// tone can't hold it inside sRGB. The stock theme isn't generated: it's the hand-tuned :root values in the CSS.
+
+// Faction seeds: primary is the faction's signature color, secondary a muted companion, tertiary its accent, neutral
+// the hull tint the surfaces take on. Factions whose palettes would duplicate one of these (Blood Raiders vs.
+// Triglavian, EDENCOM vs. Caldari, ORE vs. Guristas) are left out.
+const UI_THEME_PRESETS = {
+    amarr: { name: 'Amarr', primary: '#E3B53E', secondary: '#B08A4A', tertiary: '#D0434C', neutral: '#3C2216' },
+    caldari: { name: 'Caldari', primary: '#4DA3DE', secondary: '#7E90A6', tertiary: '#3CC4CC', neutral: '#1B2632' },
+    gallente: { name: 'Gallente', primary: '#38BC8E', secondary: '#6EA2B2', tertiary: '#8FB4EC', neutral: '#13271F' },
+    minmatar: { name: 'Minmatar', primary: '#D4683A', secondary: '#9C6C4C', tertiary: '#CBB27A', neutral: '#2B1C16' },
+    guristas: { name: 'Guristas', primary: '#EDD21C', secondary: '#8E8C76', tertiary: '#E3572C', neutral: '#1A1A17' },
+    serpentis: { name: 'Serpentis', primary: '#A977E3', secondary: '#8C7CA3', tertiary: '#B4D63C', neutral: '#1F1829' },
+    sansha: { name: "Sansha's Nation", primary: '#62D46A', secondary: '#6F9075', tertiary: '#45C8B6', neutral: '#111D13' },
+    triglavian: { name: 'Triglavian', primary: '#F04848', secondary: '#A55C5C', tertiary: '#F2A33E', neutral: '#241212' },
+};
+const UI_THEME_SEED_KEYS = ['primary', 'secondary', 'tertiary', 'neutral'];
+// Stock theme colors for its picker card and as the starting point of a custom theme.
+const UI_THEME_DEFAULT_PREVIEW = { primary: '#F5BD62', secondary: '#56442A', tertiary: '#B5CEA3', surface: '#1F1B16' };
+const UI_THEME_DEFAULT_SEEDS = { primary: '#D9A441', secondary: '', tertiary: '', neutral: '' };
+
+// [CSS custom property, palette, tone] for the dark scheme, as in M3's dark scheme spec.
+const UI_THEME_ROLES = [
+    ['--md-primary', 'p', 80], ['--md-on-primary', 'p', 20], ['--md-primary-container', 'p', 30], ['--md-on-primary-container', 'p', 90],
+    ['--md-primary-hover', 'p', 87], ['--md-inverse-primary', 'p', 40],
+    ['--md-secondary', 's', 80], ['--md-on-secondary', 's', 20], ['--md-secondary-container', 's', 30], ['--md-on-secondary-container', 's', 90],
+    ['--md-secondary-container-hover', 's', 35],
+    ['--md-tertiary', 't', 80], ['--md-on-tertiary', 't', 20], ['--md-tertiary-container', 't', 30], ['--md-on-tertiary-container', 't', 90],
+    ['--md-surface', 'n', 6], ['--md-surface-dim', 'n', 6], ['--md-surface-bright', 'n', 24],
+    ['--md-surface-container-lowest', 'n', 4], ['--md-surface-container-low', 'n', 10], ['--md-surface-container', 'n', 12],
+    ['--md-surface-container-high', 'n', 17], ['--md-surface-container-highest', 'n', 22],
+    ['--md-on-surface', 'n', 90], ['--md-inverse-surface', 'n', 90], ['--md-inverse-on-surface', 'n', 20],
+    ['--md-on-surface-variant', 'v', 80], ['--md-on-surface-muted', 'v', 65], ['--md-outline', 'v', 60], ['--md-outline-variant', 'v', 30],
+];
+// Channel triplets for rgba() uses, derived from the role of the same name.
+const UI_THEME_RGB_ROLES = ['--md-primary', '--md-on-surface', '--md-outline-variant'];
+
+const ThemeColor = (() => {
+    const toLinear = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+    const fromLinear = c => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055) * 255;
+    const cube = x => x * x * x;
+
+    function toOklch([r, g, b]) {
+        const R = toLinear(r), G = toLinear(g), B = toLinear(b);
+        const l = Math.cbrt(0.4122214708 * R + 0.5363325363 * G + 0.0514459929 * B);
+        const m = Math.cbrt(0.2119034982 * R + 0.6806995451 * G + 0.1073969566 * B);
+        const s = Math.cbrt(0.0883024619 * R + 0.2817188376 * G + 0.6299787005 * B);
+        const a = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+        const bb = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+        return { c: Math.hypot(a, bb), h: (Math.atan2(bb, a) * 180 / Math.PI + 360) % 360 };
+    }
+
+    // Linear-light sRGB of an OKLCH color (may fall outside 0..1 when out of gamut).
+    function linearFromOklch(L, C, h) {
+        const a = C * Math.cos(h * Math.PI / 180), b = C * Math.sin(h * Math.PI / 180);
+        const l = cube(L + 0.3963377774 * a + 0.2158037573 * b);
+        const m = cube(L - 0.1055613458 * a - 0.0638541728 * b);
+        const s = cube(L - 0.0894841775 * a - 1.2914855480 * b);
+        return [
+            4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+            -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+            -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
+        ];
+    }
+
+    const luminance = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    const toneToY = t => { const f = (t + 16) / 116; return f > 6 / 29 ? f * f * f : t / 903.2963; };
+    const inGamut = rgb => rgb.every(v => v >= -1e-6 && v <= 1 + 1e-6);
+
+    // The OKLab lightness whose luminance matches the tone at this hue/chroma; luminance rises with L.
+    function lightnessFor(C, h, y) {
+        let lo = 0, hi = 1;
+        for (let i = 0; i < 26; i++) {
+            const mid = (lo + hi) / 2;
+            if (luminance(linearFromOklch(mid, C, h)) < y) lo = mid; else hi = mid;
+        }
+        return (lo + hi) / 2;
+    }
+
+    const cache = new Map();
+    function tone(h, chroma, t) {
+        const key = `${h.toFixed(2)}|${chroma.toFixed(4)}|${t}`;
+        if (cache.has(key)) return cache.get(key);
+        let rgb;
+        if (t <= 0) rgb = [0, 0, 0];
+        else if (t >= 100) rgb = [1, 1, 1];
+        else {
+            const y = toneToY(t);
+            rgb = linearFromOklch(lightnessFor(chroma, h, y), chroma, h);
+            if (!inGamut(rgb)) {
+                // Highest chroma this tone can hold at this hue.
+                let lo = 0, hi = chroma;
+                for (let i = 0; i < 18; i++) {
+                    const mid = (lo + hi) / 2;
+                    if (inGamut(linearFromOklch(lightnessFor(mid, h, y), mid, h))) lo = mid; else hi = mid;
+                }
+                rgb = linearFromOklch(lightnessFor(lo, h, y), lo, h);
+            }
+        }
+        const out = rgb.map(v => Math.max(0, Math.min(255, Math.round(fromLinear(Math.max(0, Math.min(1, v)))))));
+        cache.set(key, out);
+        return out;
+    }
+
+    // "#RGB", "#RRGGBB" (the # optional), "rgb(r, g, b)" or bare "r, g, b" / "r g b", channels 0-255.
+    // Returns [r, g, b], { error: 'alpha' } for a color with transparency, or null for anything else.
+    function parse(text) {
+        const s = String(text || '').trim();
+        if (!s) return null;
+        let m = s.match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (m) {
+            const d = m[1].length === 3 ? m[1].split('').map(c => c + c).join('') : m[1];
+            return [0, 2, 4].map(i => parseInt(d.slice(i, i + 2), 16));
+        }
+        if (/^#?([0-9a-f]{4}|[0-9a-f]{8})$/i.test(s) || /^rgba\s*\(/i.test(s)) return { error: 'alpha' };
+        m = s.match(/^(?:rgb\s*\(\s*)?(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*(\))?$/i);
+        if (m && (/^rgb/i.test(s) === !!m[4])) {
+            const rgb = [m[1], m[2], m[3]].map(Number);
+            if (rgb.every(v => v <= 255)) return rgb;
+            return null;
+        }
+        if (/^(?:rgb\s*\(\s*)?\d{1,3}\s*[,\s]\s*\d{1,3}\s*[,\s]\s*\d{1,3}\s*[,/]\s*[\d.]+%?\s*\)?$/i.test(s)) return { error: 'alpha' };
+        return null;
+    }
+
+    const hex = rgb => '#' + rgb.map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+    return { toOklch, tone, parse, hex };
+})();
+
+const isRgb = v => Array.isArray(v);
+
+// Every role in UI_THEME_ROLES as a hex string (plus the *-rgb triplets) for a set of seed strings, or null when
+// the primary seed isn't a usable color. Empty or invalid optional seeds are derived from primary, M3-style:
+// secondary is primary's hue at low chroma, tertiary is rotated 60 degrees, and the surfaces carry a trace of it.
+function buildUiThemeScheme(seeds) {
+    const parsed = {};
+    UI_THEME_SEED_KEYS.forEach(k => { const v = ThemeColor.parse(seeds && seeds[k]); parsed[k] = isRgb(v) ? ThemeColor.toOklch(v) : null; });
+    const p = parsed.primary;
+    if (!p) return null;
+    const palettes = {
+        p: [p.h, p.c],
+        s: parsed.secondary ? [parsed.secondary.h, parsed.secondary.c] : [p.h, p.c * 0.35],
+        t: parsed.tertiary ? [parsed.tertiary.h, parsed.tertiary.c] : [(p.h + 60) % 360, p.c * 0.6],
+        // Capped so a strongly colored background seed still leaves readable surfaces.
+        n: parsed.neutral ? [parsed.neutral.h, Math.min(parsed.neutral.c, 0.045)] : [p.h, Math.min(p.c * 0.1, 0.016)],
+        v: parsed.neutral ? [parsed.neutral.h, Math.min(parsed.neutral.c * 1.4, 0.06)] : [p.h, Math.min(p.c * 0.15, 0.026)],
+    };
+    const scheme = {};
+    UI_THEME_ROLES.forEach(([prop, pal, t]) => {
+        const rgb = ThemeColor.tone(palettes[pal][0], palettes[pal][1], t);
+        scheme[prop] = ThemeColor.hex(rgb);
+        if (UI_THEME_RGB_ROLES.includes(prop)) scheme[prop + '-rgb'] = rgb.join(', ');
+    });
+    return scheme;
+}
+
+// The seeds a stored/form theme stands for: a preset's own, the custom ones, or null for the stock theme.
+function resolveUiThemeSeeds(theme) {
+    const id = (theme && theme.id) || 'default';
+    if (id === 'custom') return theme;
+    return UI_THEME_PRESETS[id] || null;
+}
+
+function applyUiTheme(theme) {
+    const root = document.documentElement.style;
+    const seeds = resolveUiThemeSeeds(theme);
+    const scheme = seeds && buildUiThemeScheme(seeds);
+    UI_THEME_ROLES.forEach(([prop]) => {
+        if (scheme) root.setProperty(prop, scheme[prop]); else root.removeProperty(prop);
+    });
+    UI_THEME_RGB_ROLES.forEach(prop => {
+        if (scheme) root.setProperty(prop + '-rgb', scheme[prop + '-rgb']); else root.removeProperty(prop + '-rgb');
+    });
+    return scheme;
+}
+
+// Saved theme, injected by the backend so the very first paint is already in it.
+try { applyUiTheme(window.__EVEMAJ_THEME__); } catch (e) { /* stock theme */ }
+
+function getUiThemeSeedInput(key) {
+    return document.getElementById('uiThemeSeed-' + key);
+}
+
+function readUiThemeForm() {
+    const checked = document.querySelector('input[name="uiTheme"]:checked');
+    const theme = { id: checked ? checked.value : 'default' };
+    UI_THEME_SEED_KEYS.forEach(k => { theme[k] = (getUiThemeSeedInput(k)?.value || '').trim(); });
+    return theme;
+}
+
+function populateUiThemeForm(theme) {
+    const id = (theme && theme.id) || 'default';
+    const radio = document.getElementById('uiTheme-' + id) || document.getElementById('uiTheme-default');
+    if (radio) radio.checked = true;
+    UI_THEME_SEED_KEYS.forEach(k => {
+        const input = getUiThemeSeedInput(k);
+        if (input) input.value = (theme && theme[k]) || '';
+    });
+    refreshUiThemeEditor();
+}
+
+// Shows or hides the custom editor, flags bad seeds, and paints each swatch with the seed it stands for - the
+// typed color, or for an empty optional seed the color derived for it (drawn dashed to read as "automatic").
+function refreshUiThemeEditor() {
+    const theme = readUiThemeForm();
+    const editor = document.getElementById('uiThemeCustomEditor');
+    if (editor) editor.hidden = theme.id !== 'custom';
+    // From the custom seeds even while a preset is active: this also paints the Custom card.
+    const derived = buildUiThemeScheme(theme);
+    const derivedFor = { primary: '--md-primary', secondary: '--md-secondary-container', tertiary: '--md-tertiary', neutral: '--md-surface-container' };
+    UI_THEME_SEED_KEYS.forEach(k => {
+        const input = getUiThemeSeedInput(k);
+        if (!input) return;
+        const row = input.closest('.theme-seed');
+        const swatch = row?.querySelector('input[type="color"]');
+        const error = row?.querySelector('.theme-seed-error');
+        const parsed = ThemeColor.parse(input.value);
+        const empty = !input.value.trim();
+        const bad = !empty && !isRgb(parsed);
+        const missing = empty && k === 'primary';
+        input.setAttribute('aria-invalid', bad || missing ? 'true' : 'false');
+        if (error) {
+            error.hidden = !bad;
+            error.textContent = bad ? t(parsed && parsed.error === 'alpha' ? 'theme.custom.noAlpha' : 'theme.custom.invalid') : '';
+        }
+        if (swatch && document.activeElement !== swatch) {
+            // An empty or unusable optional seed is derived, so its swatch shows what's actually in use.
+            const fallback = !isRgb(parsed) && derived && k !== 'primary';
+            swatch.value = isRgb(parsed) ? ThemeColor.hex(parsed).toLowerCase() : (fallback ? derived[derivedFor[k]].toLowerCase() : '#000000');
+            row.classList.toggle('is-auto', !!(fallback && empty));
+        }
+    });
+    paintUiThemeCard('custom', derived);
+}
+
+function paintUiThemeCard(id, scheme) {
+    const card = document.querySelector(`.theme-card[data-theme-id="${id}"] .theme-preview`);
+    if (!card) return;
+    const colors = id === 'default' ? UI_THEME_DEFAULT_PREVIEW : scheme && {
+        primary: scheme['--md-primary'], secondary: scheme['--md-secondary-container'],
+        tertiary: scheme['--md-tertiary'], surface: scheme['--md-surface-container-low'],
+    };
+    card.classList.toggle('is-empty', !colors);
+    if (!colors) return;
+    card.style.setProperty('--tp-primary', colors.primary);
+    card.style.setProperty('--tp-secondary', colors.secondary);
+    card.style.setProperty('--tp-tertiary', colors.tertiary);
+    card.style.setProperty('--tp-surface', colors.surface);
+}
+
+function onUiThemeFormChanged() {
+    applyUiTheme(readUiThemeForm());
+    refreshUiThemeEditor();
+}
+
+function initUiThemePicker() {
+    paintUiThemeCard('default');
+    Object.keys(UI_THEME_PRESETS).forEach(id => paintUiThemeCard(id, buildUiThemeScheme(UI_THEME_PRESETS[id])));
+
+    let lastPreset = 'default';
+    document.querySelectorAll('input[name="uiTheme"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (!radio.checked) return;
+            // An empty custom theme starts from whichever theme was showing, so it opens as a copy to tweak.
+            if (radio.value === 'custom' && UI_THEME_SEED_KEYS.every(k => !getUiThemeSeedInput(k).value.trim())) {
+                const from = UI_THEME_PRESETS[lastPreset] || UI_THEME_DEFAULT_SEEDS;
+                UI_THEME_SEED_KEYS.forEach(k => { getUiThemeSeedInput(k).value = from[k] || ''; });
+            }
+            if (radio.value !== 'custom') lastPreset = radio.value;
+            onUiThemeFormChanged();
+        });
+    });
+
+    UI_THEME_SEED_KEYS.forEach(k => {
+        const input = getUiThemeSeedInput(k);
+        const swatch = input.closest('.theme-seed').querySelector('input[type="color"]');
+        input.addEventListener('input', onUiThemeFormChanged);
+        // Tidy a valid entry to the canonical hex once the user is done typing.
+        input.addEventListener('change', () => {
+            const v = ThemeColor.parse(input.value);
+            if (isRgb(v) && !/^rgb|,|\s/i.test(input.value.trim())) input.value = ThemeColor.hex(v);
+            onUiThemeFormChanged();
+        });
+        // The swatch opens the shared color picker; its Clear (offered on optional seeds) means "derive it".
+        swatch.addEventListener('input', () => {
+            input.value = swatch.dataset.cleared === 'true' ? '' : swatch.value.toUpperCase();
+            delete swatch.dataset.cleared;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    });
+    refreshUiThemeEditor();
 }
 
 // Live-previews the import modal's accent color pick the same way showProfileNameModal does.
@@ -1232,6 +1535,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     initOverlayLayoutPreview();
     initCombatShowRequiresEnabled();
     initImportAccentColorPreview();
+    initUiThemePicker();
 
     // Mark initially hidden tabs for search filter
     document.querySelectorAll('.tab-item').forEach(tab => {
@@ -1249,7 +1553,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     initDelegatedKeyboardActivation();
     initConfirmButtonWidthReservation();
     buildSectionNav();
-    restoreLayoutPreference();
 
     const ready = await waitForWebUI();
     if (ready) {
@@ -1277,6 +1580,30 @@ document.addEventListener('DOMContentLoaded', async function() {
         showStatus(t('status.webuiInitFailed'), 'error');
     }
 });
+
+// Material sliders fill their track up to the value, which WebKit can't express in CSS: keep a
+// --range-fill custom property in step with every range input, whether the value comes from a drag
+// or from the script (populating a profile sets .value directly and fires no event).
+(function trackRangeFill() {
+    const update = (el) => {
+        const min = Number(el.min || 0);
+        const max = Number(el.max || 100);
+        const pct = max > min ? ((Number(el.value) - min) / (max - min)) * 100 : 0;
+        el.style.setProperty('--range-fill', `${Math.min(100, Math.max(0, pct))}%`);
+    };
+    const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(HTMLInputElement.prototype, 'value', {
+        configurable: true,
+        enumerable: desc.enumerable,
+        get() { return desc.get.call(this); },
+        set(v) {
+            desc.set.call(this, v);
+            if (this.type === 'range') update(this);
+        },
+    });
+    document.addEventListener('input', (e) => { if (e.target instanceof HTMLInputElement && e.target.type === 'range') update(e.target); }, true);
+    document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('input[type="range"]').forEach(update));
+})();
 
 // Checked per call so a mid-session OS change is picked up. scrollIntoView takes
 // its behavior as a JS argument, so the reduced-motion media query in the
@@ -1341,7 +1668,7 @@ function switchTab(panelId) {
         contentPanel.scrollTop = 0;
     }
 
-    // Keyed on which sections the newly shown tab holds rather than its name, so the same hooks work in both the classic and the AI layout (which regroups sections into different tabs).
+    // Keyed on which sections the newly shown tab holds rather than its name, so a section works wherever the layout places it.
     const shownPanel = document.querySelector(`.panel-content[data-panel="${panelId}"]`);
     const shows = (id) => !!shownPanel?.querySelector(`#${id}`);
     // Both read as 0 via getBoundingClientRect while the panel is display:none - recompute now that it's visible.
@@ -1372,7 +1699,7 @@ function switchTab(panelId) {
 }
 
 // Tabs whose sections are too few/short to be worth a sidebar sub-list.
-const TABS_WITHOUT_SUBHEADERS = ['about', 'chatlog', 'hotkey-groups', 'resources', 'combat', 'bounty', 'updates', 'ai-groups'];
+const TABS_WITHOUT_SUBHEADERS = ['about', 'chatlog', 'hotkey-groups', 'preferences', 'updates'];
 
 // IDs/labels are derived from each section's h3[data-i18n] rather than hand-maintained, so they can't drift out of sync as sections are added/removed.
 function buildSectionNav() {
@@ -4595,6 +4922,7 @@ async function saveConfigurationImpl() {
         if (!currentGlobalSettings) currentGlobalSettings = {};
         currentGlobalSettings.logLevel = getFieldValue('logLevel');
         currentGlobalSettings.language = getFieldValue('languageSelect') || 'en';
+        currentGlobalSettings.uiTheme = readUiThemeForm();
         currentGlobalSettings.hotkeyNextProfile = getFieldValue('hotkeyNextProfile') || null;
         currentGlobalSettings.hotkeyPreviousProfile = getFieldValue('hotkeyPreviousProfile') || null;
         currentGlobalSettings.hotkeyCycleAllClientsForward = getFieldValue('hotkeyCycleAllClientsForward') || null;
@@ -5255,144 +5583,6 @@ function renderDisplays() {
 window.addEventListener('resize', () => {
     if (displaysData && document.getElementById('displayDiagram')?.offsetParent) renderDisplays();
 });
-
-// ---- AI Layout: an alternative, task-oriented arrangement of the very same sections ----
-// Switching moves each section element (never copies it) into the new tabs, leaving a placeholder comment where it came from, so every id, listener and save path keeps working; switching back puts each one exactly where it was. Sections not listed here (only the classic layout's "In Other Tabs" pointer) simply stay behind, hidden with the classic tabs.
-const AI_LAYOUT_TABS = [
-    { id: 'ai-home', glyph: '★', titleKey: 'tab.ai.home.title', sections: [
-        'tab.about.section.app-name.heading', 'tab.about.section.updates.heading',
-        'tab.about.section.preferences.heading', 'tab.behavior.section.startup.heading'] },
-    { id: 'ai-characters', glyph: '☰', titleKey: 'tab.ai.characters.title', sections: [
-        'tab.characters.section.per-character-configuration.heading', 'tab.char-acc.section.populate.heading',
-        'tab.accounts.section.characters.heading', 'tab.accounts.section.accounts.heading',
-        'tab.behavior.section.character-exclusion.heading'] },
-    { id: 'ai-layout', glyph: '▦', titleKey: 'tab.ai.layout.title', sections: [
-        'tab.thumbnails.section.display-mode.heading', 'tab.thumbnails.section.region-fit.heading',
-        'tab.thumbnails.section.not-logged-in-space.heading', 'tab.thumbnails.section.thumbnail-dimensions.heading',
-        'tab.thumbnails.section.snapping-system.heading', 'tab.thumbnails.section.monitor-auto-arrange.heading',
-        'tab.thumbnails.section.position-parameters.heading', 'tab.displays.section.displays.heading'] },
-    { id: 'ai-appearance', glyph: '◐', titleKey: 'tab.ai.appearance.title', sections: [
-        'tab.thumbnails.section.border-configuration.heading', 'tab.overlay-text.section.text-display-system.heading',
-        'tab.overlay-text.section.system-color-overrides.heading', 'tab.thumbnails.section.visibility.heading'] },
-    { id: 'ai-controls', glyph: '⌨', titleKey: 'tab.ai.controls.title', sections: [
-        'tab.hotkeys.section.hotkey-system.heading', 'tab.hotkeys.section.client-cycling.heading',
-        'tab.key-bindings.section.accounts.heading', 'tab.hotkeys.section.cycling.heading',
-        'tab.hotkeys.section.window-actions.heading', 'tab.hotkeys.section.profile-hotkeys.heading',
-        'tab.hotkeys.section.system.heading', 'tab.hotkeys.section.desktop-apps.heading',
-        'tab.behavior.section.interaction.heading'] },
-    { id: 'ai-groups', glyph: '◫', titleKey: 'tab.ai.groups.title', sections: [
-        'tab.hotkey-groups.section.groups.heading'] },
-    { id: 'ai-alerts', glyph: '✉', titleKey: 'tab.ai.alerts.title', sections: [
-        'tab.notifications.section.notification-system.heading', 'tab.notifications.section.event-type-configuration.heading',
-        'tab.notifications.section.text-to-speech.heading', 'tab.notifications.section.history-panel.heading',
-        'tab.notifications.section.travel-mode.heading', 'tab.chatlog.section.chatlog-monitoring.heading',
-        'tab.chatlog.section.polling-performance.heading'] },
-    { id: 'ai-clients', glyph: '⧉', titleKey: 'tab.ai.clients.title', sections: [
-        'tab.behavior.section.auto-minimize-all-clients.heading', 'tab.behavior.section.window-position.heading',
-        'tab.behavior.section.ultra-potato.heading'] },
-    { id: 'ai-overlays', glyph: '⚔', titleKey: 'tab.ai.overlays.title', advanced: true, sections: [
-        'tab.combat.section.combat-dps-overlay.heading', 'tab.mining.section.mining-rate-overlay.heading',
-        'tab.mining.section.alerts.heading', 'tab.mining.section.ore-prices.heading',
-        'tab.bounty.section.bounty-rate-overlay.heading', 'tab.resources.section.resource-usage-overlay.heading'] },
-    { id: 'ai-system', glyph: '⚙', titleKey: 'tab.ai.system.title', advanced: true, sections: [
-        'tab.general.section.logging.heading', 'tab.general.section.scanning.heading',
-        'tab.general.section.window-filters.heading'] },
-    { id: 'ai-about', glyph: 'ⓘ', titleKey: 'tab.ai.about.title', sections: [
-        'tab.about.section.credits.heading', 'tab.about.section.thanks.heading',
-        'tab.about.section.license.heading', 'tab.about.section.snake.heading'] },
-];
-const LAYOUT_STORAGE_KEY = 'eveMajLayout';
-let aiLayoutActive = false;
-
-function findSectionByHeading(i18nKey) {
-    return document.querySelector(`#content-panel .section h3[data-i18n="${i18nKey}"]`)?.closest('.section') || null;
-}
-
-function enableAiLayout() {
-    if (aiLayoutActive) return;
-    const sidebar = document.getElementById('tabs-sidebar');
-    const content = document.getElementById('content-panel');
-    if (!sidebar || !content) return;
-    const firstClassicTab = sidebar.querySelector('.tab-item');
-
-    for (const def of AI_LAYOUT_TABS) {
-        const tab = document.createElement('div');
-        tab.className = `tab-item ai-tab${def.advanced ? ' advanced-tab' : ''}`;
-        tab.dataset.tab = def.id;
-        tab.setAttribute('role', 'tab');
-        tab.setAttribute('tabindex', '0');
-        tab.innerHTML = `<span class="tab-glyph" aria-hidden="true">${def.glyph}</span><span data-i18n="${def.titleKey}">${escapeHtml(t(def.titleKey))}</span>`;
-        tab.addEventListener('click', () => switchTab(def.id));
-        tab.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                switchTab(def.id);
-            }
-        });
-        sidebar.insertBefore(tab, firstClassicTab);
-
-        const panel = document.createElement('div');
-        panel.className = `panel-content ai-panel${def.advanced ? ' advanced-tab-panel' : ''}`;
-        panel.dataset.panel = def.id;
-        for (const key of def.sections) {
-            const section = findSectionByHeading(key);
-            if (!section) {
-                logWarn(`AI layout: no section with heading ${key}`);
-                continue;
-            }
-            const placeholder = document.createComment(`ai-layout:${key}`);
-            section.parentNode.insertBefore(placeholder, section);
-            section._aiPlaceholder = placeholder;
-            panel.appendChild(section);
-        }
-        content.appendChild(panel);
-    }
-
-    aiLayoutActive = true;
-    document.body.classList.add('ai-layout');
-    buildSectionNav();
-    refreshLayoutToggle();
-    switchTab('ai-home');
-}
-
-function disableAiLayout() {
-    if (!aiLayoutActive) return;
-    document.querySelectorAll('.ai-panel .section').forEach(section => {
-        if (!section._aiPlaceholder) return;
-        section._aiPlaceholder.replaceWith(section);
-        section._aiPlaceholder = null;
-    });
-    document.querySelectorAll('.ai-panel, .ai-tab').forEach(el => el.remove());
-    aiLayoutActive = false;
-    document.body.classList.remove('ai-layout');
-    buildSectionNav();
-    refreshLayoutToggle();
-    switchTab('about');
-}
-
-function toggleAiLayout() {
-    if (aiLayoutActive) disableAiLayout();
-    else enableAiLayout();
-    // A per-PC convenience only; the page works the same if storage is unavailable.
-    try { localStorage.setItem(LAYOUT_STORAGE_KEY, aiLayoutActive ? 'ai' : 'classic'); } catch { /* ignore */ }
-}
-
-function refreshLayoutToggle() {
-    const btn = document.getElementById('layoutToggleBtn');
-    const hint = document.getElementById('layoutToggleHint');
-    // data-i18n is kept in step too, so a later language switch (applyTranslations) keeps the right label.
-    const btnKey = aiLayoutActive ? 'button.layout-classic.label' : 'button.layout-ai.label';
-    const hintKey = aiLayoutActive ? 'misc.layout-classic-hint' : 'misc.layout-ai-hint';
-    if (btn) { btn.dataset.i18n = btnKey; btn.textContent = t(btnKey); }
-    if (hint) { hint.dataset.i18n = hintKey; hint.textContent = t(hintKey); }
-}
-
-function restoreLayoutPreference() {
-    let saved = null;
-    try { saved = localStorage.getItem(LAYOUT_STORAGE_KEY); } catch { /* ignore */ }
-    if (saved === 'ai') enableAiLayout();
-    else refreshLayoutToggle();
-}
 
 // ---- Key Binding tab: hotkeys bound to Account Config accounts (config.accountHotkeys; handled by hotkeys.zig's activateAccount) ----
 function currentAccountHotkeys() {
@@ -8306,6 +8496,9 @@ async function loadGlobalSettingsFromBackend() {
 
     setCheckboxValue('alwaysOnTopToggle', currentGlobalSettings.alwaysOnTop);
 
+    populateUiThemeForm(currentGlobalSettings.uiTheme);
+    applyUiTheme(currentGlobalSettings.uiTheme);
+
     const advancedModeEnabled = !!currentGlobalSettings.advancedMode;
     setCheckboxValue('advancedModeToggle', advancedModeEnabled);
     document.body.classList.toggle('advanced-mode', advancedModeEnabled);
@@ -8333,7 +8526,7 @@ function toggleAdvancedMode() {
     if (!enabled) {
         const activePanel = document.querySelector('.panel-content.active');
         if (activePanel && activePanel.classList.contains('advanced-tab-panel')) {
-            switchTab(aiLayoutActive ? 'ai-home' : 'about');
+            switchTab('char-acc');
         }
     }
 }
@@ -10107,9 +10300,6 @@ function filterSettings(query) {
             return;
         }
 
-        // Only the tabs of the layout in use (classic or AI) can show results; the other layout's panels are hidden.
-        if (panel.classList.contains('ai-panel') !== aiLayoutActive) return;
-
         const tab = document.querySelector(`.tab-item[data-tab="${panelTab}"]`);
         const sections = panel.querySelectorAll('.section');
         let panelHasMatches = false;
@@ -10513,7 +10703,7 @@ function syncSwatchHexInput(color) {
     }
 
     function attach(color) {
-        if (color.dataset.hexAttached || color.closest('.overlay-popover') || color.closest('.modal')) return;
+        if (color.dataset.hexAttached || color.closest('.overlay-popover') || color.closest('.modal') || color.closest('.theme-seed')) return;
         color.dataset.hexAttached = 'true';
 
         const host = color.closest('.swatch-wrap') || color;

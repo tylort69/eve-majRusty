@@ -120,9 +120,12 @@ fn assemble_page(language: &str) -> Vec<u8> {
     replace(&mut html, "/* Styles will be injected here by WebUI */", include_str!("../../ui/config_dialog.css"));
     replace(&mut html, "LAYOUT_PREVIEW_IMAGE_PLACEHOLDER", &base64(include_bytes!("../../ui/layout_preview.jpg")));
     replace(&mut html, "CASCADIA_CODE_WOFF2_PLACEHOLDER", &base64(include_bytes!("../../ui/CascadiaCode.woff2")));
+    // The saved window theme goes in ahead of the script so the page paints in it from the first frame instead of
+    // switching once loadGlobalSettings answers. "<" is escaped so no stored value can close the script element.
+    let theme = serde_json::to_string(&GlobalSettings::load().ui_theme).unwrap_or_else(|_| "null".into()).replace('<', "\\u003c");
     // The page stays hidden (html.pre-init) until the backend reveals it; here that happens as soon as it's set up.
     let script = format!(
-        "{}\nwindow.addEventListener('DOMContentLoaded', () => setTimeout(() => document.documentElement.classList.remove('pre-init'), 0));",
+        "window.__EVEMAJ_THEME__ = {theme};\n{}\nwindow.addEventListener('DOMContentLoaded', () => setTimeout(() => document.documentElement.classList.remove('pre-init'), 0));",
         include_str!("../../ui/config_dialog.js")
     );
     replace(&mut html, "// Script will be injected here by WebUI", &script);

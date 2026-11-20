@@ -1098,5 +1098,17 @@
   "update.status.noAsset": "Доступна новая версия (у вас {current}), но в релизе нет zip-архива для загрузки. Откройте страницу релиза, чтобы обновиться вручную.",
   "update.status.noDigest": "контрольная сумма не опубликована",
   "update.status.ready": "{version} загружена и проверена. Установите, когда будете готовы.",
-  "update.status.upToDate": "У вас последняя версия ({version})."
+  "update.status.upToDate": "У вас последняя версия ({version}).",
+  "tab.preferences.section.theme.heading": "Тема",
+  "tab.preferences.section.theme.hint": "Цвета этого окна настроек. Выберите тему фракции или создайте свою. Профиль с собственным акцентным цветом сохраняет его для выделений.",
+  "theme.name.default": "По умолчанию",
+  "theme.name.custom": "Своя",
+  "theme.custom.hint": "Введите цвета в hex (#3A7BD5) или RGB (58, 123, 213). Обязателен только основной; пустые поля выводятся из него.",
+  "theme.custom.primary": "Основной",
+  "theme.custom.secondary": "Дополнительный",
+  "theme.custom.tertiary": "Третичный",
+  "theme.custom.neutral": "Фон",
+  "theme.custom.auto": "Авто",
+  "theme.custom.invalid": "Это не цвет. Используйте hex (#3A7BD5) или RGB (58, 123, 213).",
+  "theme.custom.noAlpha": "Прозрачность не поддерживается. Используйте непрозрачный цвет hex или RGB."
 }

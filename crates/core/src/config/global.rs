@@ -130,6 +130,19 @@ pub struct OrePriceEntry {
     pub price: f64,
 }
 
+/// Color theme of the settings window. `id` names a built-in theme ("" or "default" is the stock one, "custom" uses the
+/// seeds below). Seeds are what the user typed (hex or RGB, empty = derive from primary); the page validates and
+/// expands them, so they're kept as text and survive a switch to a built-in theme and back.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct UiTheme {
+    pub id: String,
+    pub primary: String,
+    pub secondary: String,
+    pub tertiary: String,
+    pub neutral: String,
+}
+
 /// Binding of a hotkey to a specific target profile ("quick switch")
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -190,6 +203,7 @@ pub struct GlobalSettings {
     pub always_on_top: bool,
     pub advanced_mode: bool,
     pub language: String,
+    pub ui_theme: UiTheme,
     pub ore_table: Vec<OrePriceEntry>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dialog_x: Option<i32>,
@@ -233,6 +247,7 @@ impl Default for GlobalSettings {
             always_on_top: true,
             advanced_mode: false,
             language: "en".to_owned(),
+            ui_theme: UiTheme::default(),
             ore_table: Vec::new(),
             dialog_x: None,
             dialog_y: None,
@@ -410,5 +425,16 @@ mod tests {
         assert!(!out.contains("hotkeyPreviousProfile") && !out.contains("dialogY"));
         assert!(serde_json::from_str::<GlobalSettings>(r#"{"characterIdMap":{"Bob":1}}"#).is_err());
         assert!(serde_json::from_str::<GlobalSettings>(r#"{"characterIdMap":[]}"#).is_ok());
+    }
+
+    #[test]
+    fn ui_theme_round_trips_and_defaults_empty() {
+        assert_eq!(GlobalSettings::default().ui_theme, UiTheme::default());
+        let gs: GlobalSettings = serde_json::from_str(r#"{"uiTheme":{"id":"custom","primary":"rgb(58, 123, 213)"}}"#).unwrap();
+        assert_eq!(gs.ui_theme.id, "custom");
+        assert_eq!(gs.ui_theme.primary, "rgb(58, 123, 213)");
+        assert!(gs.ui_theme.secondary.is_empty());
+        let back: GlobalSettings = serde_json::from_str(&gs.to_json_string().unwrap()).unwrap();
+        assert_eq!(back.ui_theme, gs.ui_theme);
     }
 }

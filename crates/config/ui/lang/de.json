@@ -1098,5 +1098,17 @@
   "update.status.noAsset": "Eine neue Version ist verfügbar (installiert: {current}), aber die Veröffentlichung enthält keine ZIP-Datei. Öffne die Release-Seite, um manuell zu aktualisieren.",
   "update.status.noDigest": "keine veröffentlichte Prüfsumme",
   "update.status.ready": "{version} wurde heruntergeladen und geprüft. Installiere es, wenn du bereit bist.",
-  "update.status.upToDate": "Du verwendest die neueste Version ({version})."
+  "update.status.upToDate": "Du verwendest die neueste Version ({version}).",
+  "tab.preferences.section.theme.heading": "Design",
+  "tab.preferences.section.theme.hint": "Farben dieses Einstellungsfensters. Wähle ein Fraktionsdesign oder erstelle dein eigenes. Ein Profil mit eigener Akzentfarbe behält diese für Hervorhebungen.",
+  "theme.name.default": "Standard",
+  "theme.name.custom": "Benutzerdefiniert",
+  "theme.custom.hint": "Farben als Hex (#3A7BD5) oder RGB (58, 123, 213) eingeben. Nur Primär ist erforderlich; leere Felder werden daraus abgeleitet.",
+  "theme.custom.primary": "Primär",
+  "theme.custom.secondary": "Sekundär",
+  "theme.custom.tertiary": "Tertiär",
+  "theme.custom.neutral": "Hintergrund",
+  "theme.custom.auto": "Auto",
+  "theme.custom.invalid": "Keine Farbe. Hex (#3A7BD5) oder RGB (58, 123, 213) verwenden.",
+  "theme.custom.noAlpha": "Transparenz wird nicht unterstützt. Verwende eine deckende Hex- oder RGB-Farbe."
 }
