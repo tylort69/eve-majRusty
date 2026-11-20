@@ -2,9 +2,29 @@
 
 All notable changes to EVE-Maj Rusty.
 
-## Unreleased
+## 2.1.0 - 2026-11-19
 
-### Linux
+The first Windows release of EVE-Maj Rusty: Windows now has every feature the Linux build has, including the settings
+window. The Client List and History Panel are also redesigned on both platforms.
+
+The Windows build is new and has had less testing than Linux. If something doesn't work, please
+[open an issue](https://github.com/tylort69/eve-majRusty/issues/new/choose) and attach `eve-maj.log`, after removing
+character names and anything else private.
+
+**Windows install:** download `eve-maj-rusty-v2.1.0-windows-x86_64-portable.zip`, check it against its `.sha256` file,
+and extract it to a folder you can write to (such as `Documents\EVE-Maj Rusty`, not Program Files). Run
+`eve-maj-preview.exe`. The settings window, `config.exe`, needs the Microsoft Edge WebView2 Runtime, which Windows 11
+includes and Edge installs on Windows 10. To keep your EVE-Maj Preview settings, copy its `profiles` folder into the
+new one.
+
+**Linux install:** download `eve-maj-rusty-v2.1.0-linux-x86_64.tar.gz`, check it against its `.sha256` file, then:
+
+```sh
+tar -xzf eve-maj-rusty-v2.1.0-linux-x86_64.tar.gz
+install -Dm755 -t ~/.local/bin eve-maj-rusty-v2.1.0-linux-x86_64/eve-maj-{preview,config}
+```
+
+### Linux and Windows
 - The Client List and History Panel are redesigned to match the settings window: rounded Material 3 cards, a titled
   header with a client count, pill highlights for the focused and alerting clients, softer stat colors, and filter
   chips. They follow the theme picked in Preferences, and change with it while the app runs.
@@ -20,12 +40,12 @@ The Windows build reaches feature parity with Linux, and releases now include a 
 - Region selection for layouts, from the settings window.
 - A Rust `config.exe`: the same settings window as on Linux, in WebView2, with the in-place updater, Identify
   Displays and start-on-login.
-- `scripts/package-windows.sh` builds `eve-maj-rusty-<version>-windows-x86_64-portable.zip`, and the release workflow
-  attaches it to tagged releases. [docs/windows-testing.md](docs/windows-testing.md) is the test checklist.
+- The portable zip is what the in-app updater installs, so later Windows releases can update in place.
+  [docs/windows-testing.md](https://github.com/tylort69/eve-majRusty/blob/main/docs/windows-testing.md) is a
+  checklist for trying it out.
 
-### Shared
-- The region-selection geometry and the settings window's backend now live in shared code used by both platforms;
-  Linux behaviour is unchanged.
+### Under the hood
+- Region selection, the settings window's backend and its theme colors are shared code used by both platforms.
 
 ## 2.0.0 - 2026-11-19
 
