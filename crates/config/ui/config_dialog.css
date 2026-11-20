@@ -4017,13 +4017,6 @@ button.confirm-delete:hover {
     }
 }
 
-/* About: the improvements credit leads the Credits section. */
-.about-credit-improvements {
-    color: var(--color-accent);
-    font-weight: var(--fw-semibold);
-    font-style: normal;
-}
-
 /* Char/Acc Management: the Character List shares a scrolling tab with other sections, so it gets a fixed height (instead of filling the window like the old Characters tab) for its roster and detail panel to still scroll independently. */
 .section.character-list-section {
     display: flex;

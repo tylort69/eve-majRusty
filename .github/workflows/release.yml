@@ -1,0 +1,38 @@
+name: Release
+
+# Pushing a tag such as v1.7.0 builds the Linux binaries and opens a DRAFT release with them attached.
+# Review the draft, write the notes, and publish it by hand.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config libwayland-dev libegl-dev libgbm-dev \
+            libdrm-dev libcairo2-dev libpango1.0-dev libgtk-3-dev libwebkit2gtk-4.1-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+      - name: Test and build
+        run: cargo t && cargo linux
+      - name: Package
+        run: |
+          name="eve-maj-rusty-${GITHUB_REF_NAME}-linux-x86_64"
+          mkdir "$name"
+          cp target/x86_64-unknown-linux-gnu/release/eve-maj-preview target/x86_64-unknown-linux-gnu/release/eve-maj-config \
+             README.md LICENSE CascadiaCode-LICENSE.txt "$name"/
+          tar -czf "$name.tar.gz" "$name"
+          sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --generate-notes eve-maj-rusty-*.tar.gz*

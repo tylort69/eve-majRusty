@@ -593,7 +593,6 @@
   "field.thumbnailRegions.empty": "Областей миниатюр пока нет. Нажмите «Новая область миниатюр», чтобы добавить весь дисплей или нарисовать свою. Добавьте по одной на дисплей, чтобы использовать несколько мониторов.",
   "field.thumbnailRegions.gridTitle": "Разделите область и выберите, куда попадают персонажи",
   "field.thumbnailRegions.removeTitle": "Удалить область",
-  "misc.credits-improvements": "Made improvements by a Frat guy for an INIT guy!",
   "misc.display-regions-heading": "Области дисплея",
   "misc.display-regions-rules": "Персонаж попадает в первую область, которая его забирает: Клиент, затем Своя, затем Аккаунт, затем Все остальные. Персонажи, не попавшие ни в одну область, остаются на сохранённой позиции.",
   "misc.eve-settings-characters-heading": "Добавить персонажей из настроек EVE?",

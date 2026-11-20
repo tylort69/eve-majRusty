@@ -593,7 +593,6 @@
   "field.thumbnailRegions.empty": "Aucune zone de miniatures pour l'instant. Cliquez sur Nouvelle zone de miniatures pour ajouter un écran entier ou dessiner la vôtre. Ajoutez-en une par écran pour utiliser plusieurs moniteurs.",
   "field.thumbnailRegions.gridTitle": "Découpez cette zone et choisissez où va chaque personnage",
   "field.thumbnailRegions.removeTitle": "Supprimer la zone",
-  "misc.credits-improvements": "Made improvements by a Frat guy for an INIT guy!",
   "misc.display-regions-heading": "Zones d'écran",
   "misc.display-regions-rules": "Un personnage va dans la première zone qui le réclame : Client, puis Personnalisée, puis Compte, puis Tous les autres. Les personnages qu'aucune zone ne réclame gardent leur position enregistrée.",
   "misc.eve-settings-characters-heading": "Ajouter des personnages depuis les paramètres EVE ?",

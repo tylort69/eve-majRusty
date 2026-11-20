@@ -4,6 +4,8 @@ description = "Windows-side subsystems of eve-maj-preview and config (IPC, audio
 version.workspace = true
 edition.workspace = true
 license-file.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
 eve-maj-core = { path = "../core" }

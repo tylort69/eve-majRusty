@@ -1,9 +1,11 @@
 [package]
 name = "eve-maj-preview"
-description = "Live DWM thumbnails of EVE Online clients"
+description = "Live thumbnail previews of EVE Online clients (Windows DWM, Linux Hyprland)"
 version.workspace = true
 edition.workspace = true
 license-file.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [[bin]]
 name = "eve-maj-preview"

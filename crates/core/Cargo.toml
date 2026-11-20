@@ -4,6 +4,8 @@ description = "Platform-independent model layer shared by eve-maj-preview and co
 version.workspace = true
 edition.workspace = true
 license-file.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }

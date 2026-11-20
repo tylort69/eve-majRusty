@@ -6,6 +6,8 @@ members = ["crates/core", "crates/win", "crates/app", "crates/preview", "crates/
 version = "1.6.1"
 edition = "2021"
 license-file = "LICENSE"
+repository = "https://github.com/tylort69/eve-majRusty"
+homepage = "https://github.com/tylort69/eve-majRusty"
 
 [profile.release]
 opt-level = 3

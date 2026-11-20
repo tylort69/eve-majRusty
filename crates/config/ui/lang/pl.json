@@ -593,7 +593,6 @@
   "field.thumbnailRegions.empty": "Brak obszarów miniatur. Kliknij Nowy obszar miniatur, aby dodać cały ekran lub narysować własny. Dodaj po jednym na ekran, aby użyć kilku monitorów.",
   "field.thumbnailRegions.gridTitle": "Podziel ten obszar i wybierz, gdzie trafiają postacie",
   "field.thumbnailRegions.removeTitle": "Usuń obszar",
-  "misc.credits-improvements": "Made improvements by a Frat guy for an INIT guy!",
   "misc.display-regions-heading": "Regiony ekranu",
   "misc.display-regions-rules": "Postać trafia do pierwszego regionu, który ją obejmuje: Klient, potem Własny, potem Konto, potem Wszyscy pozostali. Postacie nieobjęte żadnym regionem zachowują zapisaną pozycję.",
   "misc.eve-settings-characters-heading": "Dodać postacie z ustawień EVE?",

@@ -1,132 +1,285 @@
 <p align="center"><img src="assets/logo.svg" width="128" height="128" alt="EVE-Maj Rusty logo"></p>
 
-# EVE-Maj Rusty
+<h1 align="center">EVE-Maj Rusty</h1>
 
-A Rust port of [EVE-Maj Preview](https://github.com/mrmjstc/eve-maj-preview) by Mr Majestic, the lightweight tool that shows live
-thumbnail previews of EVE Online client windows: DWM thumbnails on Windows, and a native Wayland front end for
-[Hyprland](https://hyprland.org) on Linux. Profiles (`profiles/*.json`) use the same format as the Zig build, so an
-existing install's settings carry over.
+<p align="center">
+  Live thumbnail previews of your EVE Online clients, with activity overlays, alerts and hotkeys.<br>
+  A Rust port of <a href="https://github.com/mrmjstc/eve-maj-preview">EVE-Maj Preview</a> with native Linux (Hyprland) support.
+</p>
 
-> Work in progress.
-> - **Windows:** Milestone 1 (thumbnails, clicking, dragging/snapping, layouts, notifications, tray, profile switching)
->   is ported; hotkeys, chatlog monitoring and its overlays, the client list and history panels, region selection and
->   `config.exe` are not yet.
-> - **Linux (Hyprland):** thumbnails, layouts, hotkeys and groups, minimize/close all, auto-move, tray, `evemajpreview://`
->   links, chat-log monitoring (system names, notifications, sounds, Travel Mode) and the activity overlays (DPS,
->   mining, bounty, CPU/RAM), the Client List view and History Panel, and the settings window (`eve-maj-config`) with
->   region selection, Identify Displays and update checks all work. See [Linux (Hyprland)](#linux-hyprland).
->
-> Unported settings still load and save, and log a warning when enabled.
+<p align="center">
+  <a href="https://github.com/tylort69/eve-majRusty/actions/workflows/ci.yml"><img src="https://github.com/tylort69/eve-majRusty/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/tylort69/eve-majRusty/releases"><img src="https://img.shields.io/github/v/release/tylort69/eve-majRusty?include_prereleases&sort=semver" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0"></a>
+</p>
 
-## Layout
+![Four client thumbnails with DPS, mining, bounty and CPU/RAM overlays and live alerts, the History Panel on the right, and the settings window, on Hyprland](docs/screenshots/hero.png)
 
-| Crate | What it is |
-|---|---|
-| `crates/core` | Platform-independent model: config, logging, protocol URL parsing, trackers, accounts, update checks. Unit-tested on any host. |
-| `crates/win` | Thin helpers over the Win32 API (windows, monitors, clipboard, shell, file pickers). |
-| `crates/app` | Windows subsystems shared by both binaries: IPC, sound, TTS, updater, displays, mouse hook. |
-| `crates/preview` | The `eve-maj-preview` binary: the Windows app (`src/*.rs`) and the Linux/Hyprland front end (`src/linux/`). |
-| `crates/config` | The `eve-maj-config` settings window for Linux: the shared dialog page (`ui/`) in a WebKitGTK window. |
+<sub>Every screenshot here comes from a sandboxed demo session: the "clients" are stand-in windows, and the pilots,
+systems and log lines are made up. No real game client, character or account is shown.</sub>
 
-`assets/` holds the embedded Cascadia fonts and the app icon.
+## Contents
 
-## Building
+- [Features](#features)
+- [Platform status](#platform-status)
+- [Install on Linux (Hyprland)](#install-on-linux-hyprland)
+- [Using it](#using-it)
+- [The settings window](#the-settings-window)
+- [Building for Windows](#building-for-windows)
+- [Project layout](#project-layout)
+- [Privacy](#privacy)
+- [Contributing, security and credits](#contributing-security-and-credits)
 
-Windows binaries cross-compile from Linux with the MinGW toolchain:
+## Features
+
+### Live thumbnails with activity overlays
+
+![Thumbnails showing system names, incoming and outgoing DPS, mining m3/min and ISK/hr, bounty ISK/hr, CPU/RAM, and Fleet invite / Warp Scrambled alerts](docs/screenshots/thumbnails.png)
+
+Each EVE client gets a live, GPU-rendered thumbnail that stays on top, even over fullscreen clients. Click one to
+bring that client forward, right-drag to move it (Ctrl+right-drag moves them all), and Shift+click to leave it out of
+hotkey cycling. Thumbnails snap to each other and to screen edges, and each character can have its own border color,
+size and opacity.
+
+Read from EVE's chat and game logs, each thumbnail can show:
+
+- **System name**, updated on every jump.
+- **Combat**: incoming (`IN`) and outgoing (`OUT`) damage per second.
+- **Mining**: m3 per minute and estimated ISK per hour.
+- **Bounties**: ISK per hour from bounty payouts.
+- **Resources**: the client's CPU and RAM use.
+
+### Alerts that find the right client
+
+The same thumbnails flash alerts the moment something happens: fleet invites, warp scrambles and disruptions,
+decloaks, cargo full, taking damage, idle mining lasers, Travel Mode's left-behind warning and more (over 30 types). Each
+alert type can show a border, play a sound, speak through text-to-speech, and be throttled or muted per character.
+
+### Client List and History Panel
+
+![The compact Client List with one row per pilot and live stats, next to the Notification History panel with FLT/MIN/CBT/NAV/GEN filters](docs/screenshots/panels.png)
+
+- **Client List** (left) is a compact alternative to thumbnails: one row per client, with a status dot and the newest
+  alert, live stats or system name. It suits large fleets of clients. Click a row to focus that client.
+- **History Panel** (right) collects recent alerts from every character, with fleet, mining, combat, navigation and
+  general filters. Click an entry to jump to that client.
+
+### Region selection for layouts
+
+![The region selection overlay: a dimmed screen with a resizable rectangle, its size and position, and Save / Cancel buttons](docs/screenshots/region-select.png)
+
+Drag out the screen area your thumbnails should fill, then fine-tune it by dragging its edges. The layout system fits
+every thumbnail into that region in the order you choose.
+
+### Hotkeys, groups and window management
+
+- Cycle through all clients, logged-out clients or **hotkey groups** (e.g. a mining fleet), and bind a key to jump
+  straight to any character or account.
+- Minimize or close all clients at once, and move each client back to its saved window position on login.
+- Switch profiles with a hotkey, or with an `evemajpreview://` link from a browser, Stream Deck or script.
+
+### Themes for the settings window
+
+![The settings window in the Amarr, Caldari, Gallente and Minmatar themes](docs/screenshots/themes.png)
+
+Pick a faction theme (Amarr, Caldari, Gallente, Minmatar, Guristas, Serpentis, Sansha's Nation, Triglavian) or build a
+custom one from up to four hex or RGB colors. The app logo in the window follows the theme too.
+
+## Platform status
+
+| | Linux (Hyprland) | Windows |
+|---|---|---|
+| Thumbnails, clicking, dragging, snapping, layouts | ✅ | ✅ |
+| Notifications, tray, profile switching | ✅ | ✅ |
+| Hotkeys and hotkey groups | ✅ | 🚧 not yet ported |
+| Chat-log monitoring, alerts, sounds, text-to-speech | ✅ | 🚧 not yet ported |
+| DPS, mining, bounty and CPU/RAM overlays | ✅ | 🚧 not yet ported |
+| Client List, History Panel, region selection | ✅ | 🚧 not yet ported |
+| Settings window | ✅ `eve-maj-config` | 🚧 `config.exe` not yet ported |
+
+Linux is the primary platform of this port. On Windows, the original
+[EVE-Maj Preview](https://github.com/mrmjstc/eve-maj-preview) is still the complete option. Profiles use the same
+JSON format in both, so settings carry over. Unported settings still load and save, and log a warning when enabled.
+
+## Install on Linux (Hyprland)
+
+You need [Hyprland](https://hyprland.org) and a current stable Rust toolchain (from [rustup](https://rustup.rs) or
+your distro).
+
+**1. Install the build dependencies.** On Arch:
 
 ```sh
-rustup target add x86_64-pc-windows-gnu
-sudo apt install gcc-mingw-w64-x86-64   # provides the linker and windres
-cargo build --release                   # default target is x86_64-pc-windows-gnu (.cargo/config.toml)
-cargo t                                 # unit tests on the Linux host
+sudo pacman -S --needed rust wayland mesa libdrm cairo pango gtk3 webkit2gtk-4.1 xdg-utils wl-clipboard
 ```
 
-On Windows, `cargo build --release --target x86_64-pc-windows-gnu` (or `-msvc`) works the same way.
-
-## Linux (Hyprland)
-
-![Thumbnails with activity overlays and notifications above the settings window, on Hyprland](docs/screenshots/linux/hero.png)
-
-*Demo setup: the "clients" are stand-in windows and the pilots, systems and log lines are made up. More screenshots
-are in [docs/screenshots/linux](docs/screenshots/linux).*
-
-`eve-maj-preview` also runs natively on Linux under [Hyprland](https://hyprland.org). Each thumbnail is a
-wlr-layer-shell overlay (so it stays above fullscreen clients); Hyprland renders the EVE window straight into a GPU
-buffer (`hyprland-toplevel-export-v1` + dmabuf) that is drawn into the thumbnail without passing through the CPU, with
-the same text/border overlay as on Windows. Layout, styling and hotkey logic come from the same `core` code, so profiles
-behave the same.
+On Debian or Ubuntu:
 
 ```sh
-sudo pacman -S --needed rust wayland mesa libdrm cairo pango gtk3 webkit2gtk-4.1 xdg-utils wl-clipboard   # Arch; any distro with these works
-cargo linux                                                    # = build --release for x86_64-unknown-linux-gnu
-./target/x86_64-unknown-linux-gnu/release/eve-maj-preview      # --profile NAME.json, --fps N (default 30)
-./target/x86_64-unknown-linux-gnu/release/eve-maj-config       # settings window; optional NAME.json
+sudo apt install build-essential pkg-config libwayland-dev libegl-dev libgbm-dev libdrm-dev libcairo2-dev libpango1.0-dev libgtk-3-dev libwebkit2gtk-4.1-dev xdg-utils wl-clipboard
 ```
 
-To install, put both binaries in the same directory, e.g. on your `PATH` (each one starts the other, looking next to
-itself first and then on `PATH`):
+**2. Build both binaries.** `cargo linux` is a repo alias for a release build of `eve-maj-preview` and
+`eve-maj-config`:
+
+```sh
+git clone https://github.com/tylort69/eve-majRusty.git
+cd eve-majRusty
+cargo linux
+```
+
+**3. Install them side by side** (each one starts the other, looking next to itself first and then on `PATH`):
 
 ```sh
 install -Dm755 -t ~/.local/bin target/x86_64-unknown-linux-gnu/release/eve-maj-{preview,config}
 ```
 
-The app installs its icon (`assets/logo.svg`) into your icon theme as `eve-maj-preview` when it writes a desktop entry
-(the `evemajpreview://` handler or the autostart entry), so those entries show the logo.
+**4. Start it** from your Hyprland config (`exec-once = eve-maj-preview`), or turn on Run on Startup in the settings
+window. That writes an XDG autostart entry, which Hyprland runs only through uwsm or a tool such as `dex`.
 
-Start `eve-maj-preview` from your Hyprland config (`exec-once = eve-maj-preview`), or turn on Run on Startup in the
-settings window, which writes an XDG autostart entry (Hyprland runs those only through uwsm or a tool such as `dex`).
+Optional extras:
 
-- Profiles, `accounts.json` and `eve-maj.log` live in `~/.config/eve-maj/` (the Windows build keeps them next to the
-  .exe). Edits to the active profile's JSON are picked up while it runs.
-- EVE clients are found by the default window filter: the Wine/Proton process image `exefile.exe` (or a window class
-  of that name). A filter's `class_names` also match Hyprland window classes, e.g. `steam_app_8500`.
-- Left-click focuses a client, right-drag moves a thumbnail, Ctrl+right-drag moves them all, Shift+click toggles
-  cycle exclusion. `display.monitorIndex` counts Hyprland monitors by id; with none set, `startX`/`startY` are relative
-  to monitor 0.
-- **Hotkeys**: every hotkey from the profile and `global.settings.json` (groups, per-character, account keys, profile
-  switching, cycling, minimize/close all, suspend, app and URL keys, mouse side buttons) is registered as a Hyprland
-  bind while the app runs and removed when it exits. They show up in `hyprctl binds` as "EVE-Maj: ...".
-- **Minimize** parks a client on the hidden `special:evemaj` workspace; clicking its thumbnail or cycling to it brings
-  it back to the current workspace. Clients on a special workspace that isn't shown count as minimized.
-- **Auto-move** floats a client and moves it to its saved window position. Save the current positions from the tray
-  ("Save Client Window Positions") or per character in the settings window.
-- **Settings window** (`eve-maj-config`): the same settings dialog as on Windows (its HTML/CSS/JS, every tab and
-  language), in a native WebKitGTK window. Open it from the tray (click the icon, or Settings…) or run it directly.
-  Saving updates the running app; live preview, Test Notification, profile switching and pausing hotkeys while a key
-  is being recorded all reach the running app over its instance socket. `runOnStartup` writes an XDG autostart entry.
-- **Identify Displays** (Display Config tab) shows each monitor's number in its top-left corner for three seconds, via
-  `eve-maj-preview --identify-displays`, so it works whether or not the app is running.
-- **Updates**: the settings window checks GitHub releases (unless update checks are disabled) and links to a newer
-  one. Releases ship the Windows zip, so downloading and installing in place is Windows-only; update a Linux build by
-  rebuilding it or through its package.
-- **Region selection** ("Drag Select Region" and editing a region in the settings window) dims every monitor: drag a
-  rectangle, then drag its edges or inside to adjust; Enter or Save keeps it, Esc, right-click or Cancel drops it. The
-  app hands the result back to the settings window through `$XDG_RUNTIME_DIR/eve-maj-region-select.json`.
-- **View modes**: Thumbnails, Client List (a compact panel with one row per client: status dot, name, and the newest
-  notification, live stats or system name) or Nothing (clients are tracked, hotkeys and notifications keep working).
-  Click a list row to focus that client, Shift+click to toggle its cycle exclusion.
-- **History Panel** (`showNotifInfoPanel`): the latest notifications across all characters, with relative times and
-  FLT/MIN/CBT/NAV/GEN filter buttons; click a row to focus that client. It hides while nobody is logged in when
-  `hideNotifInfoPanelWhenNoCharacters` is set. Both panels are dragged by their header, snap like thumbnails, and
-  remember their position when the profile says to.
-- **Tray icon** (any StatusNotifierItem host: Waybar, KDE, ...): settings, profiles, dragging/auto-minimize/travel/visibility
-  toggles, restore positions, show/clear the history panel, suspend hotkeys, close all, exit.
-- **`evemajpreview://` links** work like on Windows: the app registers itself as the handler (`autoRegisterProtocol`),
-  and a second start with a link (`eve-maj-preview --protocol URL`, or `xdg-open URL`) forwards it to the running instance.
-- **Chat-log monitoring** (`chatlog.enabled`): system names, notifications (fleet invites, scrams, decloaks, cargo
-  full, jumps, ...) and Travel Mode's left-behind alert, from EVE's chat and game logs. When `chatlogDir`/`gamelogDir`
-  don't exist, the logs are found in the running client's Wine prefix (`WINEPREFIX`, or Proton's
+- Sounds play through `ffplay`, `mpv`, `pw-play` or `paplay`; spoken alerts need `spd-say` (speech-dispatcher) or
+  `espeak-ng`.
+- `layerrule = noanim, eve-maj-preview` in `hyprland.conf` stops thumbnails animating in and out.
+- `eve-maj-preview --profile NAME.json` starts with a given profile; `--fps N` (default 30) sets the refresh rate.
+
+## Using it
+
+- **Finding clients.** EVE clients are matched by the Wine/Proton process `exefile.exe` (or a window class of that
+  name). A window filter's `class_names` also match Hyprland window classes, e.g. `steam_app_8500`.
+- **Settings and logs** live in `~/.config/eve-maj/`: profiles, `accounts.json` and `eve-maj.log`. Edits to the active
+  profile's JSON apply while the app runs.
+- **Chat-log monitoring** needs EVE to write logs (in game: Esc → Chat Channel Settings → Log chat to file). If the
+  log folders aren't set, they're found in the running client's Wine prefix (`WINEPREFIX`, or Proton's
   `STEAM_COMPAT_DATA_PATH/pfx`) under `drive_c/users/*/Documents/EVE/logs`.
-- **Activity overlays** (`combat`, `mining`, `bounty`, `resources` sections): incoming/outgoing DPS, mining m3 and
-  ISK rates, bounty ISK rate (all from the game log, so they need chat-log monitoring on) and each client's CPU/RAM
-  (from `/proc`; VRAM isn't available on Linux), with the Taking damage, Laser idle and Mining stopped alerts.
-- **Notification sounds** play through `ffplay`, `mpv`, `pw-play` or `paplay` (WAV/MP3; Windows `C:\...` paths from a
-  copied profile are skipped); **spoken alerts** use `spd-say` (speech-dispatcher) or `espeak-ng`.
-- Optional `hyprland.conf` rule: `layerrule = noanim, eve-maj-preview`.
-- Thumbnail refresh rate is `--fps` (default 30): unlike DWM, every refresh is a GPU copy done by Hyprland, so lower it
-  if you run many clients.
+- **Hotkeys** are registered as Hyprland binds while the app runs and removed when it exits. They appear in
+  `hyprctl binds` as "EVE-Maj: ...".
+- **Minimize** parks a client on the hidden `special:evemaj` workspace; clicking its thumbnail or cycling to it brings
+  it back.
+- **Auto-move** floats a client and moves it to its saved position. Save positions from the tray ("Save Client Window
+  Positions") or per character in the settings window.
+- **Tray icon** (any StatusNotifierItem host: Waybar, KDE, ...): settings, profiles, quick toggles, restore positions,
+  the history panel, suspend hotkeys, close all, exit.
+- **`evemajpreview://` links**: the app registers itself as the handler, and `xdg-open URL` forwards a link to the
+  running instance.
+- **Identify Displays** (Display Config) shows each monitor's number for three seconds.
+- **Performance**: every thumbnail refresh is a GPU copy done by Hyprland, so lower `--fps` if you run many clients.
+  RAM and CPU come from `/proc`; VRAM isn't available on Linux.
+- **Desktop icon**: when the app writes a desktop entry, it installs its logo into your icon theme as
+  `eve-maj-preview`.
 
-## License
+## The settings window
 
-GPL-3.0, like the project it is ported from. The bundled Cascadia fonts are under the SIL Open Font License
-(`CascadiaCode-LICENSE.txt`).
+`eve-maj-config` opens from the tray or on its own. Saving updates the running app straight away, and Live Preview
+shows a change on the thumbnails before you save it. Advanced Mode (Preferences) shows the Overlays and System tabs and
+the more detailed options.
+
+<details>
+<summary><b>Screenshots of every tab</b> (click to expand)</summary>
+
+#### Characters
+![Characters tab](docs/screenshots/settings/characters.png)
+Per-character display names, border colors, thumbnail size and opacity, jump-to hotkeys and exclusions. Also imports
+characters from your EVE settings and manages accounts.
+
+#### Layout
+![Layout tab](docs/screenshots/settings/layout.png)
+View mode (Thumbnails, Client List or Nothing), thumbnail size, layout regions and grids, snapping, and which displays
+to use.
+
+#### Appearance
+![Appearance tab](docs/screenshots/settings/appearance.png)
+Focused and inactive borders, text overlays (name and system position, fonts, colors), system colors, and visibility
+rules.
+
+#### Hotkeys
+![Hotkeys tab](docs/screenshots/settings/hotkeys.png)
+Client cycling, account key bindings, window actions, profile switching, suspend, and hotkeys that open apps or links.
+
+#### Hotkey groups
+![Hotkey groups tab](docs/screenshots/settings/hotkey-groups.png)
+Named groups of characters with their own cycle keys, assign keys and a badge on their thumbnails.
+
+#### Game clients
+![Game clients tab](docs/screenshots/settings/game-clients.png)
+Auto-minimize, saved window positions and how they're restored, and Ultra Potato Mode for EVE's graphics settings.
+
+#### Notifications
+![Notifications tab](docs/screenshots/settings/notifications.png)
+Every alert type with its duration, throttle, suppression, border, sound and text-to-speech options, plus
+text-to-speech, History Panel and Travel Mode settings.
+
+#### Log monitoring
+![Log monitoring tab](docs/screenshots/settings/log-monitoring.png)
+Where EVE's chat and game logs are, and how often they're read.
+
+#### Overlays (Advanced Mode)
+![Overlays tab](docs/screenshots/settings/overlays.png)
+The combat, mining, bounty and resource overlays: averaging windows, positions, fonts and colors, the alerts, and the
+ore, ice and gas price table for ISK/hr.
+
+#### Preferences
+![Preferences tab](docs/screenshots/settings/preferences.png)
+Advanced Mode, always on top, language (8 languages), the window theme, and startup options.
+
+#### System (Advanced Mode)
+![System tab](docs/screenshots/settings/system.png)
+Logging, scan interval, and the window filters that decide which windows count as EVE clients.
+
+#### Updates
+![Updates tab](docs/screenshots/settings/updates.png)
+Checks GitHub for a newer release. Nothing is downloaded without asking.
+
+#### About
+![About tab](docs/screenshots/settings/about.png)
+Version, credits and licenses.
+
+</details>
+
+## Building for Windows
+
+The Windows binaries cross-compile from Linux with MinGW (the repo's default build target):
+
+```sh
+rustup target add x86_64-pc-windows-gnu
+sudo apt install gcc-mingw-w64-x86-64   # provides the linker and windres
+cargo build --release
+```
+
+On Windows itself, `cargo build --release --target x86_64-pc-windows-gnu` (or `-msvc`) works the same way. Run the
+unit tests on a Linux host with `cargo t`.
+
+## Project layout
+
+| Crate | What it is |
+|---|---|
+| `crates/core` | Platform-independent model: config, logging, protocol URLs, chat-log parsing, trackers, accounts, update checks. Unit-tested on any host. |
+| `crates/preview` | The `eve-maj-preview` binary: the Windows app (`src/*.rs`) and the Linux/Hyprland front end (`src/linux/`). |
+| `crates/config` | The `eve-maj-config` settings window for Linux: the settings page (`ui/`) in a WebKitGTK window. |
+| `crates/app` | Windows subsystems: IPC, sound, text-to-speech, updater, displays, mouse hook. |
+| `crates/win` | Thin helpers over the Win32 API. |
+
+`assets/` holds the logo, the app icon and the embedded Cascadia fonts. `docs/screenshots/` holds the images above.
+
+## Privacy
+
+EVE-Maj Rusty runs entirely on your computer. It reads EVE's local log files and window list, and stores its settings
+in `~/.config/eve-maj/`. The only network request it makes is the update check against this repository's GitHub
+releases, which you can turn off in Preferences. It has no telemetry.
+
+When you report a bug, check logs and screenshots for character names, systems, chat channels and anything else you'd
+rather not share. The issue templates remind you.
+
+## Contributing, security and credits
+
+- Bug reports and feature requests: [open an issue](https://github.com/tylort69/eve-majRusty/issues/new/choose).
+  Pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
+- Security problems: please report them privately as described in [SECURITY.md](SECURITY.md).
+- Release history: [CHANGELOG.md](CHANGELOG.md).
+
+EVE-Maj Rusty is a port of [EVE-Maj Preview](https://github.com/mrmjstc/eve-maj-preview) by Mr Majestic, itself
+inspired by EVE-O Preview. EVE Online and all related marks are trademarks of CCP hf. This project is not affiliated
+with or endorsed by CCP.
+
+Licensed under the [GPL-3.0](LICENSE), like the project it is ported from. The bundled Cascadia fonts are under the
+SIL Open Font License ([CascadiaCode-LICENSE.txt](CascadiaCode-LICENSE.txt)).

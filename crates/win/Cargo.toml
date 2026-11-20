@@ -4,6 +4,8 @@ description = "Thin, app-agnostic helpers over the Win32 API (the Rust counterpa
 version.workspace = true
 edition.workspace = true
 license-file.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = [

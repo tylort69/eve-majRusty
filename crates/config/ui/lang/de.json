@@ -593,7 +593,6 @@
   "field.thumbnailRegions.empty": "Noch keine Miniaturbereiche. Klicke auf Neuer Miniaturbereich, um eine ganze Anzeige hinzuzufügen oder selbst einen zu zeichnen. Füge für mehrere Monitore je Anzeige einen hinzu.",
   "field.thumbnailRegions.gridTitle": "Diesen Bereich aufteilen und festlegen, welche Charaktere wohin kommen",
   "field.thumbnailRegions.removeTitle": "Bereich entfernen",
-  "misc.credits-improvements": "Made improvements by a Frat guy for an INIT guy!",
   "misc.display-regions-heading": "Anzeigebereiche",
   "misc.display-regions-rules": "Ein Charakter landet im ersten Bereich, der ihn beansprucht: Client, dann Benutzerdefiniert, dann Konto, dann Alle anderen. Nicht beanspruchte Charaktere behalten ihre gespeicherte Position.",
   "misc.eve-settings-characters-heading": "Charaktere aus den EVE-Einstellungen hinzufügen?",

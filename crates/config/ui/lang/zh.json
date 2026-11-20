@@ -593,7 +593,6 @@
   "field.thumbnailRegions.empty": "暂无缩略图区域。点击“新建缩略图区域”添加整个显示器或自行绘制。为每个显示器各添加一个即可使用多台显示器。",
   "field.thumbnailRegions.gridTitle": "划分此区域并选择各角色的位置",
   "field.thumbnailRegions.removeTitle": "移除区域",
-  "misc.credits-improvements": "Made improvements by a Frat guy for an INIT guy!",
   "misc.display-regions-heading": "显示器区域",
   "misc.display-regions-rules": "角色会进入第一个认领它的区域：客户端、自定义、账号，最后是其余所有。未被任何区域认领的角色保持其已保存的位置。",
   "misc.eve-settings-characters-heading": "从 EVE 设置添加角色？",

@@ -1,0 +1,46 @@
+name: Bug report
+description: Something doesn't work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before you paste logs or screenshots:** they can show your character names, systems, chat channels, fleet
+        members and corp or alliance. Remove or blur anything you don't want to be public.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. ...\n2. ...\n3. ..."
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Settings window → About, or the release you downloaded / the commit you built.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Linux (Hyprland)
+        - Windows
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Distro, Hyprland version, GPU, and how you run EVE (Steam/Proton, Lutris, Wine...)
+  - type: textarea
+    id: log
+    attributes:
+      label: Relevant part of eve-maj.log
+      description: Linux `~/.config/eve-maj/eve-maj.log`, Windows next to the .exe. Remove private details first.
+      render: text

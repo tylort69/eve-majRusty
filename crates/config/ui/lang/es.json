@@ -593,7 +593,6 @@
   "field.thumbnailRegions.empty": "Aún no hay regiones de miniaturas. Pulsa Nueva región de miniaturas para añadir una pantalla completa o dibujar la tuya. Añade una por pantalla para usar varios monitores.",
   "field.thumbnailRegions.gridTitle": "Divide esta región y elige qué personajes van a cada parte",
   "field.thumbnailRegions.removeTitle": "Quitar región",
-  "misc.credits-improvements": "Made improvements by a Frat guy for an INIT guy!",
   "misc.display-regions-heading": "Regiones de pantalla",
   "misc.display-regions-rules": "Un personaje va a la primera región que lo reclama: Cliente, luego Personalizada, luego Cuenta y luego Todos los demás. Los personajes que ninguna región reclama conservan su posición guardada.",
   "misc.eve-settings-characters-heading": "¿Añadir personajes desde la configuración de EVE?",

@@ -593,7 +593,6 @@
   "field.thumbnailRegions.empty": "No thumbnail regions yet. Click New Thumbnail Region to add a full display or draw your own. Add one per display to use several monitors.",
   "field.thumbnailRegions.gridTitle": "Split this region and choose which characters go where",
   "field.thumbnailRegions.removeTitle": "Remove region",
-  "misc.credits-improvements": "Made improvements by a Frat guy for an INIT guy!",
   "misc.display-regions-heading": "Display Regions",
   "misc.display-regions-rules": "A character goes to the first region that claims it: Client, then Custom, then Account, then Everyone Else. Characters no region claims keep their own saved position.",
   "misc.eve-settings-characters-heading": "Add Characters from EVE Settings?",
