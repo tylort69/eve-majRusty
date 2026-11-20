@@ -2,9 +2,23 @@
 
 All notable changes to EVE-Maj Rusty.
 
-## Unreleased
+## 2.0.0 - 2026-11-19
 
-First public release of the Rust port.
+First public release of EVE-Maj Rusty, a Rust rewrite of EVE-Maj Preview. The major version marks the new
+codebase and home; profiles from EVE-Maj Preview load unchanged.
+
+This release ships Linux (Hyprland) binaries. Windows users should keep using the original EVE-Maj Preview until the
+remaining Windows features are ported.
+
+**Requirements:** Hyprland, and the runtime libraries listed in the README (Wayland, EGL/GBM, cairo, pango, GTK 3,
+WebKitGTK 4.1).
+
+**Install:** download `eve-maj-rusty-v2.0.0-linux-x86_64.tar.gz`, check it against its `.sha256` file, then:
+
+```sh
+tar -xzf eve-maj-rusty-v2.0.0-linux-x86_64.tar.gz
+install -Dm755 -t ~/.local/bin eve-maj-rusty-v2.0.0-linux-x86_64/eve-maj-{preview,config}
+```
 
 ### Linux (Hyprland)
 - Live GPU thumbnails of EVE clients as always-on-top overlays, with dragging, snapping, layouts and region fitting.
