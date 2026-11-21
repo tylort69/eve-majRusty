@@ -2,6 +2,16 @@
 
 All notable changes to EVE-Maj Rusty.
 
+## Unreleased
+
+### Added
+
+- Importing an EVE-Maj Preview profile export now also brings over its accounts, which characters belong to each
+  account, and its account key bindings. They are two new sections in the Import dialog: **Accounts & Characters**
+  and **Account Key Bindings**. Accounts are shared by all profiles, so they are saved straight away. An imported account
+  with the same name as one you already have is merged into it, and its key bindings move with it. Importing the same
+  file again updates what it imported, without duplicates.
+
 ## 2.1.0 - 2026-11-19
 
 The first Windows release of EVE-Maj Rusty: Windows now has every feature the Linux build has, including the settings

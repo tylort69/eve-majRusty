@@ -4292,6 +4292,9 @@ const MAJ_SECTIONS = [
     { id: 'systemColors', titleKey: 'dynamic.import.maj.systemColors.title', hintKey: 'dynamic.import.maj.systemColors.hint', kind: 'array' },
     { id: 'hotkeyGroups', titleKey: 'dynamic.import.maj.hotkeyGroups.title', hintKey: 'dynamic.import.maj.hotkeyGroups.hint', kind: 'array' },
     { id: 'windowFilters', titleKey: 'dynamic.import.maj.windowFilters.title', hintKey: 'dynamic.import.maj.windowFilters.hint', kind: 'array' },
+    // Exports carry profiles/accounts.json as accountLinks ({accounts, characters}); it's shared by all profiles, so it's merged and saved straight away.
+    { id: 'accountLinks', titleKey: 'dynamic.import.maj.accountLinks.title', hintKey: 'dynamic.import.maj.accountLinks.hint', kind: 'accounts' },
+    { id: 'accountHotkeys', titleKey: 'dynamic.import.maj.accountHotkeys.title', hintKey: 'dynamic.import.maj.accountHotkeys.hint', kind: 'array' },
 ];
 
 function computeMajImportSections(data) {
@@ -4301,6 +4304,10 @@ function computeMajImportSections(data) {
         if (s.kind === 'array') {
             const arr = Array.isArray(data[s.id]) ? data[s.id] : [];
             return { id: s.id, title, hint: `${hint} (${arr.length})`, available: arr.length > 0 };
+        }
+        if (s.kind === 'accounts') {
+            const links = importedAccountLinks(data);
+            return { id: s.id, title, hint: `${hint} (${links.accounts.length} / ${links.characters.length})`, available: links.accounts.length + links.characters.length > 0 };
         }
         return { id: s.id, title, hint, available: data[s.id] !== undefined && data[s.id] !== null };
     });
@@ -4331,8 +4338,99 @@ function mergeMajByKey(list, imported, keyField) {
     });
 }
 
+// The export's accountLinks, cleaned: accounts need an id and name, characters a numeric EVE ID (IDs end up in onclick handlers, as in loadAccountsData).
+function importedAccountLinks(data) {
+    const links = (data && typeof data.accountLinks === 'object' && data.accountLinks) || {};
+    const str = v => (typeof v === 'string' || typeof v === 'number') ? String(v).trim() : '';
+    const accounts = (Array.isArray(links.accounts) ? links.accounts : [])
+        .map(a => ({ id: str(a?.id), name: str(a?.name), userIds: (Array.isArray(a?.userIds) ? a.userIds : []).map(str).filter(u => EVE_ID_PATTERN.test(u)) }))
+        .filter(a => a.id && a.name);
+    const characters = (Array.isArray(links.characters) ? links.characters : [])
+        .map(c => ({ id: str(c?.id), name: str(c?.name), accountId: str(c?.accountId) }))
+        .filter(c => EVE_ID_PATTERN.test(c.id));
+    return { accounts, characters };
+}
+
+// Imported account id -> id of the matching account here: same id, else same name (case-insensitive), else unmatched (undefined).
+function matchImportedAccounts(importedAccounts, existingAccounts) {
+    const idMap = {};
+    importedAccounts.forEach(a => {
+        const match = existingAccounts.find(x => x.id === a.id)
+            || existingAccounts.find(x => (x.name || '').trim().toLowerCase() === a.name.toLowerCase());
+        if (match) idMap[a.id] = match.id;
+    });
+    return idMap;
+}
+
+// Merges imported accounts and character links into accountsData: matched accounts gain the imported EVE user IDs, new ones are added, and each imported character is (re)linked to its account. Returns the imported-id -> local-id map for remapping account key bindings.
+function mergeImportedAccountLinks(links) {
+    const accounts = accountsData.accounts;
+    const idMap = matchImportedAccounts(links.accounts, accounts);
+    let added = 0;
+    links.accounts.forEach(a => {
+        const localId = idMap[a.id];
+        const existing = localId && accounts.find(x => x.id === localId);
+        if (existing) {
+            existing.userIds = [...new Set([...(existing.userIds || []), ...a.userIds])];
+        } else {
+            accounts.push({ id: a.id, name: a.name, userIds: a.userIds });
+            idMap[a.id] = a.id;
+            added++;
+        }
+    });
+
+    let linked = 0;
+    links.characters.forEach(c => {
+        const accountId = idMap[c.accountId] || (accounts.some(x => x.id === c.accountId) ? c.accountId : null);
+        const existing = accountsData.characters.find(x => String(x.id) === c.id);
+        if (existing) {
+            if (c.name) existing.name = c.name;
+            if (accountId) existing.accountId = accountId;
+        } else {
+            accountsData.characters.push({ id: c.id, name: c.name || null, accountId });
+        }
+        if (accountId) linked++;
+    });
+    return { idMap, added, matched: links.accounts.length - added, linked };
+}
+
+// Replaces the bindings of every account the import has bindings for (so re-importing updates them instead of piling up duplicates), after mapping imported account ids onto local ones. Bindings to accounts that don't exist here are skipped.
+function mergeImportedAccountHotkeys(imported, idMap) {
+    const known = new Set(accountsData.accounts.map(a => a.id));
+    const incoming = [];
+    let skipped = 0;
+    (Array.isArray(imported) ? imported : []).forEach(b => {
+        const hotkey = typeof b?.hotkey === 'string' && /^0x[0-9a-f]+$/i.test(b.hotkey.trim()) ? '0x' + b.hotkey.trim().slice(2).toUpperCase() : null;
+        const rawId = typeof b?.accountId === 'string' ? b.accountId : '';
+        const accountId = idMap[rawId] || rawId;
+        if (!hotkey || !known.has(accountId)) { skipped++; return; }
+        if (!incoming.some(x => x.hotkey === hotkey && x.accountId === accountId)) incoming.push({ hotkey, accountId });
+    });
+    const covered = new Set(incoming.map(b => b.accountId));
+    currentConfig.accountHotkeys = currentAccountHotkeys().filter(b => !covered.has(b.accountId)).concat(incoming);
+    return { imported: incoming.length, skipped };
+}
+
 async function applyMajImport(checked, allNotes) {
     const data = importParsedData;
+
+    // Accounts first: the key bindings below point at account ids that may be remapped onto accounts that already exist here.
+    const links = importedAccountLinks(data);
+    let accountIdMap = matchImportedAccounts(links.accounts, accountsData.accounts);
+    if (checked('accountLinks')) {
+        const result = mergeImportedAccountLinks(links);
+        accountIdMap = result.idMap;
+        await saveAccountsData();
+        renderAccountsPanel();
+        allNotes.push(t('dynamic.import.maj.accountLinksImportedNote')
+            .replace('{added}', result.added).replace('{matched}', result.matched).replace('{n}', result.linked));
+    }
+    if (checked('accountHotkeys')) {
+        saveAccountKeyBindings();
+        const result = mergeImportedAccountHotkeys(data.accountHotkeys, accountIdMap);
+        allNotes.push(t('dynamic.import.maj.accountHotkeysImportedNote').replace('{n}', result.imported));
+        if (result.skipped > 0) allNotes.push(t('dynamic.import.maj.accountHotkeysSkippedNote').replace('{n}', result.skipped));
+    }
 
     MAJ_SECTIONS.filter(s => s.kind === 'object').forEach(s => {
         if (!checked(s.id) || !data[s.id]) return;
