@@ -641,6 +641,12 @@ fn cycle_profile(current: &str, forward: bool) -> Option<String> {
 /// xkb key name for a profile hotkey's base key (what Linux compositors bind on), e.g. VK 'A' -> "A", VK_PRIOR -> "Prior".
 /// Mouse buttons use the compositor-neutral evdev button names "mouse:275"/"mouse:276" and wheel "mouse_up"/"mouse_down".
 pub fn xkb_key_name(vk: u32) -> Option<String> {
+    // F13-F24 are bound by keycode ("code:N", xkb keycode = evdev KEY_F13 (183) + 8 onwards): the standard xkb keymap
+    // gives most of them other keysyms (F20 is XF86AudioMicMute, F22 XF86TouchpadOn, Ctrl+F24 XF86TouchpadToggle, ...),
+    // so a bind on the name "F22" never fires.
+    if (VK_F1 + 12..=VK_F24).contains(&vk) {
+        return Some(format!("code:{}", 191 + (vk - VK_F1 - 12)));
+    }
     if (VK_F1..=VK_F24).contains(&vk) {
         return Some(format!("F{}", vk - VK_F1 + 1));
     }
@@ -883,6 +889,10 @@ mod tests {
     #[test]
     fn key_names() {
         assert_eq!(xkb_key_name(VK_F1 + 11).as_deref(), Some("F12"));
+        // F13-F24 by keycode, since xkb maps several of them to other keysyms.
+        assert_eq!(xkb_key_name(VK_F1 + 12).as_deref(), Some("code:191"));
+        assert_eq!(xkb_key_name(0x85).as_deref(), Some("code:200"));
+        assert_eq!(xkb_key_name(VK_F24).as_deref(), Some("code:202"));
         assert_eq!(xkb_key_name(VK_PRIOR).as_deref(), Some("Prior"));
         assert_eq!(xkb_key_name(VK_NUMPAD0 + 7).as_deref(), Some("KP_7"));
         assert_eq!(xkb_key_name(VK_XBUTTON2).as_deref(), Some("mouse:276"));
