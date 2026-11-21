@@ -178,6 +178,12 @@ impl App {
         } else {
             self.wm.focus(window);
         }
+        // Stacked clients overlap, so focusing alone may leave another one drawn on top: re-assert this one's size and
+        // position (EVE can resize itself, e.g. on login) and raise it.
+        let name = self.thumbs[i].name.clone();
+        if self.stack_client(window, &name) {
+            self.wm.raise(window);
+        }
         let t = &mut self.thumbs[i];
         let before = t.notifications.len();
         t.notifications.retain(|n| !n.suppress_when_clicked);
@@ -310,6 +316,48 @@ impl App {
             self.wm.minimize(w);
             SLOG.info(format_args!("Auto-minimized {name}"));
             self.scan_needed = true;
+        }
+    }
+
+    /// Where a stacked client goes: the whole of the configured monitor, else of the monitor it's on. None when
+    /// stacking is off or the monitor isn't known.
+    fn stack_rect(&self, window: WindowId) -> Option<eve_maj_core::display_grid::Rect> {
+        let cfg = &self.config.auto_move_position;
+        if !cfg.stack_clients {
+            return None;
+        }
+        let wanted = cfg.stack_monitor.trim();
+        let name = if wanted.is_empty() || !self.monitors.iter().any(|m| m.name == wanted) {
+            self.toplevels.iter().find(|t| t.id == window)?.monitor.clone()
+        } else {
+            wanted.to_owned()
+        };
+        self.monitors.iter().find(|m| m.name == name).map(|m| m.bounds)
+    }
+
+    /// Floats a client over the whole stacking monitor (Window Position > Stack Clients); false when stacking is off
+    /// or the character is excluded from moves.
+    pub(super) fn stack_client(&mut self, window: WindowId, name: &str) -> bool {
+        if self.config.is_excluded_from_auto_move(name) {
+            return false;
+        }
+        let Some(rect) = self.stack_rect(window) else { return false };
+        let at_rect = self.toplevels.iter().any(|t| t.id == window && t.floating && t.at == (rect.left, rect.top) && t.size == (rect.right - rect.left, rect.bottom - rect.top));
+        if !at_rect {
+            self.wm.place(window, rect);
+            SLOG.debug(format_args!("Stacked {name} client over {}x{} at ({}, {})", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top));
+        }
+        true
+    }
+
+    pub(super) fn stack_all_clients(&mut self) {
+        let targets: Vec<(WindowId, String)> = self.thumbs.iter().filter(|t| !t.minimized).map(|t| (t.window, t.name.clone())).collect();
+        for (w, name) in targets {
+            self.stack_client(w, &name);
+        }
+        // Keep whichever client was in front in front.
+        if let Some(a) = self.active.filter(|a| self.thumbs.iter().any(|t| t.window == *a)) {
+            self.wm.raise(a);
         }
     }
 
@@ -506,6 +554,7 @@ impl App {
 
     /// Swaps in a freshly loaded profile: caches, exclusion flags, layout and hotkeys.
     pub(super) fn apply_new_config(&mut self, config: Config) {
+        let old_stack = (self.config.auto_move_position.stack_clients, self.config.auto_move_position.stack_monitor.clone());
         self.config = config;
         self.profile_mtime = super::profile_mtime(&self.config.profile_name);
         self.membership = accounts_store::load_membership();
@@ -519,6 +568,12 @@ impl App {
         self.register_hotkeys();
         // Restarts or stops chat-log monitoring if its settings changed.
         self.ensure_chatlog();
+        // Turning stacking on (or picking another monitor) applies to the clients already open. Turning it off leaves
+        // them floating where they are.
+        let stack = &self.config.auto_move_position;
+        if stack.stack_clients && (stack.stack_clients, stack.stack_monitor.clone()) != old_stack {
+            self.stack_all_clients();
+        }
         self.scan_needed = true;
     }
 }

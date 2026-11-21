@@ -1298,6 +1298,21 @@
                         </label>
                         <p class="hint hint-extra" data-i18n="field.autoMoveOnStartup.hint">Moves clients already logged in when the app launches.</p>
 
+                        <div class="linux-only" style="display: none;">
+                            <label>
+                                <input type="checkbox" id="stackClients" onchange="updateStackMonitorEnabled()">
+                                <span class="label-body" data-i18n="field.stackClients.label">Stack Clients Full Screen</span>
+                            </label>
+                            <p class="hint hint-extra" data-i18n="field.stackClients.hint">Every client covers a whole monitor, stacked on top of each other, and activating one (hotkey, thumbnail or Client List click) brings it to the front. Used instead of saved positions.</p>
+                            <div class="binding-list">
+                                <div class="binding">
+                                    <label for="stackMonitor" data-i18n="field.stackMonitor.label">Stack On Monitor</label>
+                                    <select id="stackMonitor"></select>
+                                </div>
+                                <p class="hint hint-extra" data-i18n="field.stackMonitor.hint">The monitor stacked clients cover.</p>
+                            </div>
+                        </div>
+
                         <div class="advanced-section">
                             <div class="binding-list">
                                 <div class="binding">

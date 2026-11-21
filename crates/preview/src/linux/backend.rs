@@ -51,6 +51,8 @@ pub struct Toplevel {
     pub minimized: bool,
     /// Top-left in layout coordinates.
     pub at: (i32, i32),
+    /// Width and height in layout coordinates.
+    pub size: (i32, i32),
     pub floating: bool,
     /// Monitor (connector name) the window is on.
     pub monitor: String,
@@ -106,6 +108,10 @@ pub trait WindowManager {
     fn restore(&self, id: WindowId);
     /// Places a window's top-left at (x, y) in layout coordinates, floating it first if the layout tiles it.
     fn move_to(&self, id: WindowId, x: i32, y: i32);
+    /// Floats a window at exactly `rect` (layout coordinates), without focusing it.
+    fn place(&self, id: WindowId, rect: Rect);
+    /// Puts a window above every other window on its workspace.
+    fn raise(&self, id: WindowId);
 }
 
 /// The Windows-side image path of a Wine/Proton process (argv[0], e.g. `C:\EVE\...\exefile.exe`), else the native executable.
@@ -166,7 +172,7 @@ mod tests {
     use super::*;
 
     fn toplevel(class: &str, title: &str) -> Toplevel {
-        Toplevel { id: 1, title: title.into(), class: class.into(), initial_class: class.into(), pid: 0, minimized: false, at: (0, 0), floating: false, monitor: String::new() }
+        Toplevel { id: 1, title: title.into(), class: class.into(), initial_class: class.into(), pid: 0, minimized: false, at: (0, 0), size: (0, 0), floating: false, monitor: String::new() }
     }
 
     #[test]

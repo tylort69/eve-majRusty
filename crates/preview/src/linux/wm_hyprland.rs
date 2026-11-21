@@ -151,6 +151,7 @@ impl WindowManager for HyprlandWm {
                     pid: int(v, "pid") as i32,
                     minimized: workspace.starts_with("special") && !shown_specials.contains(&workspace.as_str()),
                     at: pair(v, "at"),
+                    size: pair(v, "size"),
                     floating: v.get("floating").and_then(Value::as_bool).unwrap_or(false),
                     monitor: monitors.iter().find(|(_, id, _)| *id == int(v, "monitor")).map(|(m, _, _)| m.name.clone()).unwrap_or_default(),
                 })
@@ -233,6 +234,24 @@ impl WindowManager for HyprlandWm {
             self.dispatch(&format!("setfloating address:0x{id:x}"), &format!("hl.dsp.window.float({{ action = \"enable\", window = \"address:0x{id:x}\" }})"));
         }
         self.dispatch(&format!("movewindowpixel exact {x} {y},address:0x{id:x}"), &format!("hl.dsp.window.move({{ x = {x}, y = {y}, window = \"address:0x{id:x}\" }})"));
+    }
+
+    fn place(&self, id: WindowId, rect: Rect) {
+        let (w, h) = (rect.right - rect.left, rect.bottom - rect.top);
+        if w <= 0 || h <= 0 {
+            return;
+        }
+        let floating = self.toplevels().into_iter().find(|t| t.id == id).is_some_and(|t| t.floating);
+        if !floating {
+            self.dispatch(&format!("setfloating address:0x{id:x}"), &format!("hl.dsp.window.float({{ action = \"enable\", window = \"address:0x{id:x}\" }})"));
+        }
+        // Size first: Hyprland resizes a floating window around its center, which would shift an already-placed one.
+        self.dispatch(&format!("resizewindowpixel exact {w} {h},address:0x{id:x}"), &format!("hl.dsp.window.resize({{ x = {w}, y = {h}, window = \"address:0x{id:x}\" }})"));
+        self.move_to(id, rect.left, rect.top);
+    }
+
+    fn raise(&self, id: WindowId) {
+        self.dispatch(&format!("alterzorder top,address:0x{id:x}"), &format!("hl.dsp.window.alter_zorder({{ mode = \"top\", window = \"address:0x{id:x}\" }})"));
     }
 
     fn event_fd(&self) -> Option<RawFd> {

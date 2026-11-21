@@ -440,7 +440,9 @@ impl App {
             self.thumbs[i].excluded = self.hotkeys.is_character_excluded(&self.config, &self.thumbs[i].name);
         }
         self.register_hotkeys();
-        if self.config.auto_move_position.move_on_startup {
+        if self.config.auto_move_position.stack_clients {
+            self.stack_all_clients();
+        } else if self.config.auto_move_position.move_on_startup {
             self.move_all_clients_to_saved_positions();
         }
         loop {
@@ -625,7 +627,12 @@ impl App {
             }
             self.create_thumb(w);
             needs_reflow |= managed;
-            if self.config.auto_move_position.enabled {
+            // Stacking replaces saved positions: a stacked client always covers its whole monitor.
+            if !w.minimized && self.stack_client(w.id, &w.character_name) {
+                if self.active == Some(w.id) {
+                    self.wm.raise(w.id);
+                }
+            } else if self.config.auto_move_position.enabled {
                 self.move_client_to_saved_position(w.id, &w.character_name);
             }
         }
@@ -683,8 +690,11 @@ impl App {
         if was_generic && !now_generic {
             // Exclusion is per character, so it comes back with the login; same for the auto-move-on-login setting.
             self.thumbs[i].excluded = self.hotkeys.is_character_excluded(&self.config, new_name);
-            if self.config.auto_move_position.enabled {
-                let window = self.thumbs[i].window;
+            let window = self.thumbs[i].window;
+            if self.config.auto_move_position.stack_clients {
+                // EVE resizes its window when a character logs in; put it back over the monitor.
+                self.stack_client(window, new_name);
+            } else if self.config.auto_move_position.enabled {
                 self.move_client_to_saved_position(window, new_name);
             }
         }

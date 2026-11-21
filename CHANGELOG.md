@@ -2,6 +2,23 @@
 
 All notable changes to EVE-Maj Rusty.
 
+## Unreleased
+
+### Added
+- Linux: **Stack Clients Full Screen** (Behavior > Window Position) floats every EVE client over a whole monitor,
+  stacked on top of each other. Activating a client, with a hotkey, an account key binding or a thumbnail or Client List
+  click, brings it to the front. This is how borderless full-screen clients already behave on Windows; on a tiling
+  compositor such as Hyprland, the clients otherwise tile side by side. Pick the monitor, or leave each client on the
+  one it's on. Characters excluded from auto-move are left alone.
+- Every thumbnail region now has an edit button (✎), including whole-display ones. It can point the region at another
+  display, or redraw it starting from where it is now. Only its placement changes: its grid, and the characters and
+  accounts assigned to its cells, are kept. Before, a display region had to be removed and set up again.
+
+### Fixed
+- Linux: hotkeys on F13 to F24 now work. The standard keyboard map turns most of those keys into other keys (F22
+  becomes "touchpad on", F20 "mic mute", Ctrl+F24 "touchpad toggle"), so a hotkey on them never fired. They are now
+  bound by the physical key.
+
 ## 2.2.0 - 2026-11-21
 
 Importing an EVE-Maj Preview profile export now brings over your accounts and account key bindings, not only the

@@ -716,6 +716,8 @@ const CONFIG_SCHEMA = [
     { id: 'autoMoveOnStartup', path: 'autoMovePosition.moveOnStartup' },
     { id: 'autoMoveVerifyInterval', path: 'autoMovePosition.verifyIntervalMs', transform: 'ms' },
     { id: 'autoMoveVerifyCount', path: 'autoMovePosition.verifyCount' },
+    { id: 'stackClients', path: 'autoMovePosition.stackClients' },
+    { id: 'stackMonitor', path: 'autoMovePosition.stackMonitor' },
 
     { id: 'enableShiftClickExclude', path: 'exclusion.enableShiftClickExclude' },
     { id: 'autoMinimizeExcludedCharacters', path: 'exclusion.autoMinimizeExcluded' },
@@ -2051,7 +2053,7 @@ async function renderThumbnailRegionsList() {
                     <div class="thumbnail-region-meta">${escapeHtml(meta.join(' · '))}</div>
                 </div>
                 <button type="button" onclick="openDisplayRegionsModal(${i})" title="${escapeHtml(t('field.thumbnailRegions.gridTitle'))}">${escapeHtml(t('button.thumbnailRegions.grid'))}</button>
-                ${layout.displayId ? '' : `<button type="button" class="button-icon" onclick="editThumbnailRegion(${i})" title="${escapeHtml(t('field.thumbnailRegions.editTitle'))}">✎</button>`}
+                <button type="button" class="button-icon" onclick="editThumbnailRegion(${i})" title="${escapeHtml(t('field.thumbnailRegions.editTitle'))}">✎</button>
                 <button type="button" id="thumbRegion_${i}_removeBtn" class="button-icon button-icon-danger" onclick="confirmRemove('thumbRegion_${i}_removeBtn', () => removeThumbnailRegion(${i}), '✓')" title="${escapeHtml(t('field.thumbnailRegions.removeTitle'))}">&times;</button>
             </div>`;
     }).join('');
@@ -2092,13 +2094,32 @@ async function addThumbnailRegionFlow() {
     thumbnailRegionsChanged(t('status.thumbnailRegionAdded').replace('{name}', t('dynamic.thumbnailRegions.drawnName')));
 }
 
+// Points an existing region at another display, or redraws it (starting from where it is now). Only the placement changes: the grid and the characters and accounts assigned to its cells stay.
 async function editThumbnailRegion(index) {
+    if (typeof webui === 'undefined' || regionSelectPollTimer) return;
     const layout = currentDisplayLayouts()[index];
-    if (!layout || layout.displayId) return;
+    if (!layout) return;
+    const choice = await showRegionModeModal({ displayId: layout.displayId, useWorkArea: layout.useWorkArea });
+    if (!choice) return;
+
+    if (choice.mode === 'display') {
+        const displays = await fetchDisplaysForRegions(true);
+        const display = displays?.find(d => d.id === choice.displayId);
+        const name = display ? t('dynamic.displayRegions.displayLabel').replace('{n}', String(display.number)) : '';
+        const other = currentDisplayLayouts().findIndex((l, i) => i !== index && l.displayId === choice.displayId);
+        if (other >= 0) {
+            showStatus(t('status.thumbnailRegionExists').replace('{name}', name), 'info');
+            return;
+        }
+        Object.assign(layout, { displayId: choice.displayId, ...choice.rect, useWorkArea: choice.useWorkArea });
+        thumbnailRegionsChanged(t('status.thumbnailRegionMoved').replace('{name}', name));
+        return;
+    }
+
     const rect = await runRegionOverlay(REGION_FIELD_IDS.hideThumbnails, [layout.x, layout.y, layout.width, layout.height]);
     if (!rect) return;
-    Object.assign(layout, { x: rect.x, y: rect.y, width: rect.width, height: rect.height });
-    thumbnailRegionsChanged(t('status.regionSet'));
+    Object.assign(layout, { displayId: '', x: rect.x, y: rect.y, width: rect.width, height: rect.height, useWorkArea: false });
+    thumbnailRegionsChanged(t('status.thumbnailRegionMoved').replace('{name}', t('dynamic.thumbnailRegions.drawnName')));
 }
 
 function removeThumbnailRegion(index) {
@@ -2483,9 +2504,14 @@ async function openDisplayRegionsModal(index) {
 let regionPickerData = null;
 let regionPickerSelected = null;
 
-function showRegionModeModal() {
+// edit ({ displayId, useWorkArea }): changing an existing region - its own heading, and the display step starts on the region's display.
+function showRegionModeModal(edit = null) {
     return new Promise((resolve) => {
         const modal = document.getElementById('region-mode-modal');
+        const heading = modal.querySelector('[data-i18n="misc.region-mode-heading"]');
+        const hint = modal.querySelector('[data-i18n="misc.region-mode-hint"]');
+        if (heading) heading.textContent = t(edit ? 'misc.region-mode-edit-heading' : 'misc.region-mode-heading');
+        if (hint) hint.textContent = t(edit ? 'misc.region-mode-edit-hint' : 'misc.region-mode-hint');
         const chooseStep = document.getElementById('region-mode-step-choose');
         const displayStep = document.getElementById('region-mode-step-display');
         const buttons = {
@@ -2520,7 +2546,7 @@ function showRegionModeModal() {
         const onBack = () => showStep('choose');
         const onDisplay = async () => {
             showStep('display');
-            await loadRegionDisplayPicker();
+            await loadRegionDisplayPicker(edit);
         };
         const onConfirm = () => {
             const d = regionPickerData?.displays?.find(x => x.number === regionPickerSelected);
@@ -2539,7 +2565,7 @@ function showRegionModeModal() {
     });
 }
 
-async function loadRegionDisplayPicker() {
+async function loadRegionDisplayPicker(edit = null) {
     const list = document.getElementById('regionDisplayList');
     const confirmBtn = document.getElementById('region-display-confirm');
     if (confirmBtn) confirmBtn.disabled = true;
@@ -2558,7 +2584,10 @@ async function loadRegionDisplayPicker() {
     const containing = Number.isFinite(centerX) && displays.find(d =>
         centerX >= d.bounds.x && centerX < d.bounds.x + d.bounds.width &&
         centerY >= d.bounds.y && centerY < d.bounds.y + d.bounds.height);
-    regionPickerSelected = (containing || displays.find(d => d.primary) || displays[0])?.number ?? null;
+    const editing = edit?.displayId ? displays.find(d => d.id === edit.displayId) : null;
+    regionPickerSelected = (editing || containing || displays.find(d => d.primary) || displays[0])?.number ?? null;
+    const useWork = document.getElementById('regionDisplayUseWorkArea');
+    if (useWork && edit) useWork.checked = edit.displayId ? !!edit.useWorkArea : true;
     renderRegionDisplayPicker();
 }
 
@@ -2766,6 +2795,7 @@ function populateFormFields() {
     applyAccentColorTheme();
     applyConfigSchemaToForm();
     applySpecialFieldsToForm();
+    refreshStackMonitorOptions();
 
     if (document.getElementById('syncOverlayStyling')?.checked) syncOverlayStyleFromCharacterName();
 
@@ -5681,6 +5711,44 @@ function renderDisplays() {
 window.addEventListener('resize', () => {
     if (displaysData && document.getElementById('displayDiagram')?.offsetParent) renderDisplays();
 });
+
+// ---- Window Position: Stack Clients Full Screen (Linux only; Windows clients stack on their own) ----
+// WebKitGTK reports Linux in its user agent, WebView2 Windows.
+const IS_LINUX = /Linux/.test(navigator.userAgent) && !/Windows|Android/.test(navigator.userAgent);
+let stackMonitorDisplays = null;
+
+// Rebuilds the monitor list, keeping the current choice even when that monitor isn't connected right now.
+function renderStackMonitorOptions() {
+    const select = document.getElementById('stackMonitor');
+    if (!select) return;
+    const chosen = select.dataset.loaded ? select.value : (currentConfig?.autoMovePosition?.stackMonitor || '');
+    const displays = stackMonitorDisplays || [];
+    const options = [`<option value="">${escapeHtml(t('field.stackMonitor.option.current'))}</option>`,
+        ...displays.map(d => `<option value="${escapeHtml(d.id)}">${escapeHtml(`${d.id} - ${d.name} (${d.bounds.width}x${d.bounds.height})`)}</option>`)];
+    if (chosen && !displays.some(d => d.id === chosen)) options.push(`<option value="${escapeHtml(chosen)}">${escapeHtml(chosen)}</option>`);
+    select.innerHTML = options.join('');
+    select.value = chosen;
+    select.dataset.loaded = '1';
+    updateStackMonitorEnabled();
+}
+
+function refreshStackMonitorOptions() {
+    document.querySelectorAll('.linux-only').forEach(el => { el.style.display = IS_LINUX ? '' : 'none'; });
+    if (!IS_LINUX) return;
+    const select = document.getElementById('stackMonitor');
+    if (select) delete select.dataset.loaded;
+    renderStackMonitorOptions();
+    if (stackMonitorDisplays !== null || typeof webui === 'undefined') return;
+    stackMonitorDisplays = [];
+    webui.call('getDisplays')
+        .then(r => { stackMonitorDisplays = JSON.parse(r).displays || []; renderStackMonitorOptions(); })
+        .catch(error => logWarn('Failed to list monitors for stacking:', error));
+}
+
+function updateStackMonitorEnabled() {
+    const select = document.getElementById('stackMonitor');
+    if (select) select.disabled = !document.getElementById('stackClients')?.checked;
+}
 
 // ---- Key Binding tab: hotkeys bound to Account Config accounts (config.accountHotkeys; handled by hotkeys.zig's activateAccount) ----
 function currentAccountHotkeys() {

@@ -548,11 +548,16 @@ pub struct AutoMovePositionConfig {
     pub move_on_startup: bool,
     pub verify_interval_ms: u32,
     pub verify_count: u8,
+    /// Linux: float every client at the full size of one monitor, stacked, and raise the one being activated (what
+    /// borderless-fullscreen clients do on their own on Windows, where this is ignored).
+    pub stack_clients: bool,
+    /// Connector name of the monitor to stack on ("DP-1"); empty means each client's current monitor.
+    pub stack_monitor: String,
 }
 
 impl Default for AutoMovePositionConfig {
     fn default() -> Self {
-        Self { enabled: false, move_on_startup: false, verify_interval_ms: 2000, verify_count: 6 }
+        Self { enabled: false, move_on_startup: false, verify_interval_ms: 2000, verify_count: 6, stack_clients: false, stack_monitor: String::new() }
     }
 }
 
