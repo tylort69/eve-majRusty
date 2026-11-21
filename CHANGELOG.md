@@ -2,15 +2,35 @@
 
 All notable changes to EVE-Maj Rusty.
 
-## Unreleased
+## 2.2.0 - 2026-11-21
+
+Importing an EVE-Maj Preview profile export now brings over your accounts and account key bindings, not only the
+profile's settings. It works the same on Linux and Windows.
+
+**Windows install:** download `eve-maj-rusty-v2.2.0-windows-x86_64-portable.zip`, check it against its `.sha256` file,
+and extract it to a folder you can write to (such as `Documents\EVE-Maj Rusty`, not Program Files). Run
+`eve-maj-preview.exe`. If you already run 2.1.0, you can update from the settings window's Updates tab instead. The
+settings window, `config.exe`, needs the Microsoft Edge WebView2 Runtime, which Windows 11 includes and Edge installs
+on Windows 10.
+
+**Linux install:** download `eve-maj-rusty-v2.2.0-linux-x86_64.tar.gz`, check it against its `.sha256` file, then:
+
+```sh
+tar -xzf eve-maj-rusty-v2.2.0-linux-x86_64.tar.gz
+install -Dm755 -t ~/.local/bin eve-maj-rusty-v2.2.0-linux-x86_64/eve-maj-{preview,config}
+```
 
 ### Added
+- The Import dialog has two new sections for EVE-Maj Preview profile exports:
+  - **Accounts & Characters:** your accounts, and which characters belong to each.
+  - **Account Key Bindings:** the hotkeys that switch to an account's clients.
+- Accounts are shared by all profiles, so they are saved straight away.
+- An imported account with the same name as one you already have is merged into it, and its key bindings move with
+  it.
+- Importing the same file again updates what it imported, without duplicates.
 
-- Importing an EVE-Maj Preview profile export now also brings over its accounts, which characters belong to each
-  account, and its account key bindings. They are two new sections in the Import dialog: **Accounts & Characters**
-  and **Account Key Bindings**. Accounts are shared by all profiles, so they are saved straight away. An imported account
-  with the same name as one you already have is merged into it, and its key bindings move with it. Importing the same
-  file again updates what it imported, without duplicates.
+### Under the hood
+- CI now fails if a new commit carries an email address other than a GitHub no-reply one.
 
 ## 2.1.0 - 2026-11-19
 
