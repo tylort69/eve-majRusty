@@ -2,7 +2,24 @@
 
 All notable changes to EVE-Maj Rusty.
 
-## Unreleased
+## 2.3.0 - 2026-11-21
+
+On Linux, EVE clients can now be stacked full screen on one monitor, with hotkeys bringing the chosen one to the
+front. Thumbnail regions can be moved to another display or redrawn without setting them up again, and F13 to F24
+hotkeys now work on Linux.
+
+**Windows install:** download `eve-maj-rusty-v2.3.0-windows-x86_64-portable.zip`, check it against its `.sha256` file,
+and extract it to a folder you can write to (such as `Documents\EVE-Maj Rusty`, not Program Files). Run
+`eve-maj-preview.exe`. If you already run 2.1.0 or later, you can update from the settings window's Updates tab
+instead. The settings window, `config.exe`, needs the Microsoft Edge WebView2 Runtime, which Windows 11 includes and
+Edge installs on Windows 10.
+
+**Linux install:** download `eve-maj-rusty-v2.3.0-linux-x86_64.tar.gz`, check it against its `.sha256` file, then:
+
+```sh
+tar -xzf eve-maj-rusty-v2.3.0-linux-x86_64.tar.gz
+install -Dm755 -t ~/.local/bin eve-maj-rusty-v2.3.0-linux-x86_64/eve-maj-{preview,config}
+```
 
 ### Added
 - Linux: **Stack Clients Full Screen** (Behavior > Window Position) floats every EVE client over a whole monitor,
