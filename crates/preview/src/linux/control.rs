@@ -321,7 +321,8 @@ impl App {
 
     /// Where a stacked client goes: the whole of the configured monitor, else of the monitor it's on. None when
     /// stacking is off or the monitor isn't known.
-    fn stack_rect(&self, window: WindowId) -> Option<eve_maj_core::display_grid::Rect> {
+    /// The monitor a stacked client covers, and its bounds.
+    fn stack_rect(&self, window: WindowId) -> Option<(String, eve_maj_core::display_grid::Rect)> {
         let cfg = &self.config.auto_move_position;
         if !cfg.stack_clients {
             return None;
@@ -332,7 +333,7 @@ impl App {
         } else {
             wanted.to_owned()
         };
-        self.monitors.iter().find(|m| m.name == name).map(|m| m.bounds)
+        self.monitors.iter().find(|m| m.name == name).map(|m| (name.clone(), m.bounds))
     }
 
     /// Floats a client over the whole stacking monitor (Window Position > Stack Clients); false when stacking is off
@@ -341,8 +342,14 @@ impl App {
         if self.config.is_excluded_from_auto_move(name) {
             return false;
         }
-        let Some(rect) = self.stack_rect(window) else { return false };
-        let at_rect = self.toplevels.iter().any(|t| t.id == window && t.floating && t.at == (rect.left, rect.top) && t.size == (rect.right - rect.left, rect.bottom - rect.top));
+        let Some((monitor, rect)) = self.stack_rect(window) else { return false };
+        // The client in front is fullscreen (cover_stack_front): leave it be, it already covers the monitor.
+        let at_rect = self.toplevels.iter().any(|t| {
+            // Hyprland's monitor, from the window's workspace: a window can sit at the right coordinates on another.
+            t.id == window
+                && t.monitor == monitor
+                && (t.fullscreen || (t.floating && t.at == (rect.left, rect.top) && t.size == (rect.right - rect.left, rect.bottom - rect.top)))
+        });
         if !at_rect {
             self.wm.place(window, rect);
             SLOG.debug(format_args!("Stacked {name} client over {}x{} at ({}, {})", rect.right - rect.left, rect.bottom - rect.top, rect.left, rect.top));
@@ -358,6 +365,36 @@ impl App {
         // Keep whichever client was in front in front.
         if let Some(a) = self.active.filter(|a| self.thumbs.iter().any(|t| t.window == *a)) {
             self.wm.raise(a);
+        }
+        self.cover_stack_front(self.active);
+    }
+
+    /// Stack Clients: Hyprland draws bars (its top layer) over floating windows but not over a fullscreen one, so the
+    /// client in front is made fullscreen, and the one it replaces goes back to floating over the monitor. Called on
+    /// every focus change; focus moving to another app leaves it to Hyprland (misc:on_focus_under_fullscreen).
+    pub(super) fn cover_stack_front(&mut self, window: Option<WindowId>) {
+        let Some(w) = window else { return };
+        let Some(t) = self.thumbs.iter().find(|t| t.window == w) else { return };
+        if t.minimized {
+            return;
+        }
+        // Focused some other way than through the app (a click, Alt+Tab): put it over the stacking monitor first, so
+        // it goes fullscreen there and not on the monitor it was on.
+        let name = t.name.clone();
+        if !self.stack_client(w, &name) {
+            return;
+        }
+        if let Some(old) = self.stack_front.filter(|&o| o != w && self.thumbs.iter().any(|t| t.window == o)) {
+            self.wm.set_fullscreen(old, false);
+        }
+        self.wm.set_fullscreen(w, true);
+        self.stack_front = Some(w);
+    }
+
+    /// Takes the stacked client in front out of fullscreen (stacking turned off, or moved to another monitor).
+    pub(super) fn uncover_stack_front(&mut self) {
+        if let Some(old) = self.stack_front.take().filter(|&o| self.thumbs.iter().any(|t| t.window == o)) {
+            self.wm.set_fullscreen(old, false);
         }
     }
 
@@ -569,10 +606,13 @@ impl App {
         // Restarts or stops chat-log monitoring if its settings changed.
         self.ensure_chatlog();
         // Turning stacking on (or picking another monitor) applies to the clients already open. Turning it off leaves
-        // them floating where they are.
+        // them floating where they are, the front one out of fullscreen.
         let stack = &self.config.auto_move_position;
-        if stack.stack_clients && (stack.stack_clients, stack.stack_monitor.clone()) != old_stack {
-            self.stack_all_clients();
+        if (stack.stack_clients, stack.stack_monitor.clone()) != old_stack {
+            self.uncover_stack_front();
+            if self.config.auto_move_position.stack_clients {
+                self.stack_all_clients();
+            }
         }
         self.scan_needed = true;
     }

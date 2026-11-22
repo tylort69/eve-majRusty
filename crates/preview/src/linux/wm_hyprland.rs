@@ -153,6 +153,7 @@ impl WindowManager for HyprlandWm {
                     at: pair(v, "at"),
                     size: pair(v, "size"),
                     floating: v.get("floating").and_then(Value::as_bool).unwrap_or(false),
+                    fullscreen: v.get("fullscreen").and_then(Value::as_i64).is_some_and(|f| f != 0),
                     monitor: monitors.iter().find(|(_, id, _)| *id == int(v, "monitor")).map(|(m, _, _)| m.name.clone()).unwrap_or_default(),
                 })
             })
@@ -241,8 +242,23 @@ impl WindowManager for HyprlandWm {
         if w <= 0 || h <= 0 {
             return;
         }
-        let floating = self.toplevels().into_iter().find(|t| t.id == id).is_some_and(|t| t.floating);
-        if !floating {
+        let Some(window) = self.toplevels().into_iter().find(|t| t.id == id) else { return };
+        // A floating window moved to another monitor's coordinates still belongs to its old workspace, and so to the old
+        // monitor: that monitor's bars aren't the ones it's under, and fullscreen would cover the old monitor. Move it
+        // to the target monitor's current workspace first.
+        if let Some(Value::Array(list)) = self.request_json("j/monitors") {
+            let target = list.iter().find(|v| {
+                let b = parse_monitor(v).0.bounds;
+                (b.left..b.right).contains(&rect.left) && (b.top..b.bottom).contains(&rect.top)
+            });
+            if let Some(v) = target.filter(|v| string(v, "name") != window.monitor) {
+                let ws = v.get("activeWorkspace").map(|w| int(w, "id")).unwrap_or(0);
+                if ws > 0 {
+                    self.dispatch(&format!("movetoworkspacesilent {ws},address:0x{id:x}"), &format!("hl.dsp.window.move({{ workspace = {ws}, follow = false, window = \"address:0x{id:x}\" }})"));
+                }
+            }
+        }
+        if !window.floating {
             self.dispatch(&format!("setfloating address:0x{id:x}"), &format!("hl.dsp.window.float({{ action = \"enable\", window = \"address:0x{id:x}\" }})"));
         }
         // Size first: Hyprland resizes a floating window around its center, which would shift an already-placed one.
@@ -252,6 +268,19 @@ impl WindowManager for HyprlandWm {
 
     fn raise(&self, id: WindowId) {
         self.dispatch(&format!("alterzorder top,address:0x{id:x}"), &format!("hl.dsp.window.alter_zorder({{ mode = \"top\", window = \"address:0x{id:x}\" }})"));
+    }
+
+    fn set_fullscreen(&self, id: WindowId, on: bool) {
+        // client = -1 keeps the client's own fullscreen state.
+        let lua = format!("hl.dsp.window.fullscreen_state({{ internal = {}, client = -1, window = \"address:0x{id:x}\" }})", if on { 2 } else { 0 });
+        if on {
+            // The classic fullscreenstate dispatcher only acts on the focused window, which this is when it's called.
+            self.dispatch("fullscreenstate 2 -1", &lua);
+        } else if self.lua_dispatch.get() == Some(true) {
+            self.dispatch(&lua, &lua);
+        }
+        // Classic Hyprland can't target another window: misc:on_focus_under_fullscreen (by default) already takes the
+        // previous one out of fullscreen when the next is focused.
     }
 
     fn event_fd(&self) -> Option<RawFd> {

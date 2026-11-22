@@ -232,6 +232,7 @@ fn run() -> Result<(), String> {
         thumbs: Vec::new(),
         next_id: 1,
         active: None,
+        stack_front: None,
         eve_focus_lost_at: None,
         pointer_state: PointerState::default(),
         ctrl: false,
@@ -375,6 +376,8 @@ struct App {
     next_id: u64,
     /// The focused Hyprland window (any app), like the Windows build's foreground window.
     active: Option<u64>,
+    /// Stack Clients: the client made fullscreen to cover the bars (control.rs cover_stack_front).
+    stack_front: Option<u64>,
     /// When focus last left every EVE client, for hideWhenNoEveFocus's debounce.
     eve_focus_lost_at: Option<u64>,
     pointer_state: PointerState,
@@ -849,6 +852,7 @@ impl App {
         }
         let old = self.active;
         self.active = new_active;
+        self.cover_stack_front(new_active);
         self.on_focus_changed(new_active);
         for t in &mut self.thumbs {
             if Some(t.window) == old || Some(t.window) == new_active {

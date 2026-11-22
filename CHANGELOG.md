@@ -2,6 +2,15 @@
 
 All notable changes to EVE-Maj Rusty.
 
+## Unreleased
+
+### Fixed
+- Linux: with Stack Clients Full Screen, bars such as Waybar no longer draw over the client in front. Hyprland draws
+  bars over floating windows, so the client in front is now fullscreen on Hyprland's side, and goes back to floating
+  when another client comes to the front. The game itself stays in its own window mode.
+- Linux: Stack Clients Full Screen moves each client onto the chosen monitor's workspace, not only to its
+  coordinates. Before, a client could sit over the chosen monitor while Hyprland still counted it as on another one.
+
 ## 2.3.1 - 2026-11-21
 
 The app's logo now shows in the Windows tray, and on the settings window in Alt+Tab, the taskbar and Linux docks.

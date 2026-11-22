@@ -54,6 +54,8 @@ pub struct Toplevel {
     /// Width and height in layout coordinates.
     pub size: (i32, i32),
     pub floating: bool,
+    /// Hyprland fullscreen (or maximized) state.
+    pub fullscreen: bool,
     /// Monitor (connector name) the window is on.
     pub monitor: String,
 }
@@ -112,6 +114,9 @@ pub trait WindowManager {
     fn place(&self, id: WindowId, rect: Rect);
     /// Puts a window above every other window on its workspace.
     fn raise(&self, id: WindowId);
+    /// Makes a window cover its monitor, bars included, or puts it back. Only the compositor's state changes: the
+    /// client isn't told it's fullscreen, so a game keeps its own window mode.
+    fn set_fullscreen(&self, id: WindowId, on: bool);
 }
 
 /// The Windows-side image path of a Wine/Proton process (argv[0], e.g. `C:\EVE\...\exefile.exe`), else the native executable.
@@ -172,7 +177,7 @@ mod tests {
     use super::*;
 
     fn toplevel(class: &str, title: &str) -> Toplevel {
-        Toplevel { id: 1, title: title.into(), class: class.into(), initial_class: class.into(), pid: 0, minimized: false, at: (0, 0), size: (0, 0), floating: false, monitor: String::new() }
+        Toplevel { id: 1, title: title.into(), class: class.into(), initial_class: class.into(), pid: 0, minimized: false, at: (0, 0), size: (0, 0), floating: false, fullscreen: false, monitor: String::new() }
     }
 
     #[test]
