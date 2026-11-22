@@ -2,6 +2,30 @@
 
 All notable changes to EVE-Maj Rusty.
 
+## 2.3.1 - 2026-11-21
+
+The app's logo now shows in the Windows tray, and on the settings window in Alt+Tab, the taskbar and Linux docks.
+
+**Windows install:** download `eve-maj-rusty-v2.3.1-windows-x86_64-portable.zip`, check it against its `.sha256` file,
+and extract it to a folder you can write to (such as `Documents\EVE-Maj Rusty`, not Program Files). Run
+`eve-maj-preview.exe`. If you already run 2.1.0 or later, you can update from the settings window's Updates tab
+instead. The settings window, `config.exe`, needs the Microsoft Edge WebView2 Runtime, which Windows 11 includes and
+Edge installs on Windows 10.
+
+**Linux install:** download `eve-maj-rusty-v2.3.1-linux-x86_64.tar.gz`, check it against its `.sha256` file, then:
+
+```sh
+tar -xzf eve-maj-rusty-v2.3.1-linux-x86_64.tar.gz
+install -Dm755 -t ~/.local/bin eve-maj-rusty-v2.3.1-linux-x86_64/eve-maj-{preview,config}
+```
+
+### Fixed
+- Windows: the tray icon shows the app's logo instead of the generic Windows one. It looked for an `icon.ico` next to
+  the program, which the portable zip doesn't have.
+- Windows: the settings window shows the logo in Alt+Tab and the taskbar too, not only in its title bar.
+- Linux: the settings window shows the logo in docks, taskbars and window switchers. It identified itself as
+  `eve-maj-config`, which no desktop entry is named; it now uses `eve-maj-preview`.
+
 ## 2.3.0 - 2026-11-21
 
 On Linux, EVE clients can now be stacked full screen on one monitor, with hotkeys bringing the chosen one to the
