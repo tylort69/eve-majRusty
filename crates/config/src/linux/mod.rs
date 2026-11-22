@@ -65,6 +65,13 @@ pub fn run() -> Result<(), String> {
     }
     SLOG.info(format_args!("EVE-Maj Config v{} (Linux)", env!("CARGO_PKG_VERSION")));
 
+    // The Wayland app_id (X11 WM_CLASS) is GTK's program name, which defaults to the binary's, eve-maj-config. No
+    // .desktop file has that name, so docks, taskbars and Alt+Tab found no icon for the window. eve-maj-preview is the
+    // desktop file the app writes, with the app icon.
+    gtk::glib::set_prgname(Some(eve_maj_core::desktop_icon::ICON_NAME));
+    if let Err(e) = eve_maj_core::desktop_icon::install() {
+        SLOG.warn(format_args!("Couldn't install the app icon: {e}"));
+    }
     let event_loop = EventLoopBuilder::<UiEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
     let server = server::Server::start(backend::Backend::new(proxy, profile, &global.language)).map_err(|e| format!("can't start the dialog server: {e}"))?;
@@ -75,6 +82,8 @@ pub fn run() -> Result<(), String> {
         .with_inner_size(LogicalSize::new(1100.0, 800.0))
         .with_min_inner_size(LogicalSize::new(760.0, 520.0))
         .with_always_on_top(global.always_on_top)
+        // For window managers that draw the window's own icon instead of looking up its desktop file.
+        .with_window_icon(eve_maj_core::desktop_icon::ico_rgba(64).and_then(|rgba| tao::window::Icon::from_rgba(rgba, 64, 64).ok()))
         .build(&event_loop)
         .map_err(|e| format!("can't open the window: {e}"))?;
     let vbox = window.default_vbox().ok_or("no GTK container for the web view")?;

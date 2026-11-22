@@ -10,14 +10,17 @@ use std::path::PathBuf;
 use eve_maj_core::config::GlobalSettings;
 use eve_maj_core::log::{self, Scope};
 use eve_maj_win::wide;
-use tao::dpi::LogicalSize;
+use tao::dpi::{LogicalSize, PhysicalSize};
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
-use tao::platform::windows::{IconExtWindows, WindowExtWindows};
+use tao::platform::windows::{IconExtWindows, WindowBuilderExtWindows, WindowExtWindows};
 use tao::window::{Icon, WindowBuilder};
 use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, ERROR_ALREADY_EXISTS, HWND, TRUE};
 use windows_sys::Win32::System::Threading::CreateMutexW;
-use windows_sys::Win32::UI::WindowsAndMessaging::{FindWindowW, IsIconic, MessageBoxW, SetForegroundWindow, ShowWindow, MB_ICONERROR, MB_OK, MB_SETFOREGROUND, MB_TOPMOST, SW_RESTORE};
+use windows_sys::Win32::UI::WindowsAndMessaging::{
+    FindWindowW, GetSystemMetrics, IsIconic, MessageBoxW, SetForegroundWindow, ShowWindow, MB_ICONERROR, MB_OK, MB_SETFOREGROUND, MB_TOPMOST,
+    SM_CXICON, SM_CXSMICON, SM_CYICON, SM_CYSMICON, SW_RESTORE,
+};
 use wry::{WebContext, WebViewBuilder};
 
 use crate::{backend, server, UiEvent};
@@ -111,9 +114,16 @@ pub fn run() -> Result<(), String> {
         .with_inner_size(LogicalSize::new(1100.0, 800.0))
         .with_min_inner_size(LogicalSize::new(760.0, 520.0))
         .with_always_on_top(global.always_on_top);
-    match Icon::from_resource(ICON_RESOURCE, None) {
+    // tao sets the window icon as ICON_SMALL only (title bar); without an ICON_BIG, Alt+Tab and the taskbar show a
+    // generic one. Load each at its own size so neither is scaled from the other.
+    let icon_at = |w, h| Icon::from_resource(ICON_RESOURCE, Some(PhysicalSize::new(unsafe { GetSystemMetrics(w) } as u32, unsafe { GetSystemMetrics(h) } as u32)));
+    match icon_at(SM_CXSMICON, SM_CYSMICON) {
         Ok(icon) => builder = builder.with_window_icon(Some(icon)),
         Err(e) => SLOG.warn(format_args!("No window icon: {e}")),
+    }
+    match icon_at(SM_CXICON, SM_CYICON) {
+        Ok(icon) => builder = builder.with_taskbar_icon(Some(icon)),
+        Err(e) => SLOG.warn(format_args!("No taskbar icon: {e}")),
     }
     let window = builder.build(&event_loop).map_err(|e| format!("can't open the window: {e}"))?;
     let owner = window.hwnd() as HWND;

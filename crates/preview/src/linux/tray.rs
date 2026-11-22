@@ -6,12 +6,12 @@
 use std::os::fd::RawFd;
 use std::sync::mpsc::{channel, Receiver, Sender};
 
+use eve_maj_core::desktop_icon;
 use eve_maj_core::log::Scope;
 use ksni::blocking::TrayMethods;
 use ksni::menu::{CheckmarkItem, MenuItem, RadioGroup, RadioItem, StandardItem, SubMenu};
 
 const SLOG: Scope = Scope::new("tray");
-static ICON_ICO: &[u8] = include_bytes!("../../../../assets/icon.ico");
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TrayCommand {
@@ -180,23 +180,11 @@ impl Tray {
     }
 }
 
-/// The app's 32x32 BMP icon (assets/icon.ico) as the ARGB32 big-endian pixmap the StatusNotifierItem spec wants.
+/// The app's 32x32 icon as the ARGB32 big-endian pixmap the StatusNotifierItem spec wants.
 fn decode_icon() -> Option<ksni::Icon> {
-    let d = ICON_ICO;
-    let u32_at = |o: usize| -> Option<u32> { Some(u32::from_le_bytes(d.get(o..o + 4)?.try_into().ok()?)) };
-    // ICONDIRENTRY 0 starts at byte 6; its image offset is at +12.
-    let off = u32_at(6 + 12)? as usize;
-    let header_len = u32_at(off)? as usize;
-    let width = u32_at(off + 4)? as usize;
-    let height = u32_at(off + 8)? as usize / 2; // BMP-in-ICO height covers the XOR and AND masks
-    let pixels = d.get(off + header_len..off + header_len + width * height * 4)?;
-    let mut data = Vec::with_capacity(width * height * 4);
-    for row in (0..height).rev() {
-        for px in pixels[row * width * 4..(row + 1) * width * 4].as_chunks::<4>().0 {
-            data.extend_from_slice(&[px[3], px[2], px[1], px[0]]);
-        }
-    }
-    Some(ksni::Icon { width: width as i32, height: height as i32, data })
+    let rgba = desktop_icon::ico_rgba(32)?;
+    let data = rgba.chunks_exact(4).flat_map(|p| [p[3], p[0], p[1], p[2]]).collect();
+    Some(ksni::Icon { width: 32, height: 32, data })
 }
 
 #[cfg(test)]

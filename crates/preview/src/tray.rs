@@ -8,6 +8,7 @@ use eve_maj_core::types::ViewMode;
 use eve_maj_core::update::UPDATE_STATUS;
 use eve_maj_win::{shell, wide, window};
 use windows_sys::Win32::Foundation::{HWND, LPARAM, POINT};
+use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows_sys::Win32::UI::Shell::{Shell_NotifyIconW, NIF_ICON, NIF_INFO, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE, NIM_MODIFY, NOTIFYICONDATAW};
 use windows_sys::Win32::UI::WindowsAndMessaging::*;
 
@@ -17,6 +18,9 @@ use crate::manager;
 const SLOG: Scope = Scope::new("tray");
 
 pub const WM_TRAYICON: u32 = WM_USER + 1;
+
+/// IDI_ICON1 in assets/app.rc.
+const APP_ICON_RESOURCE: u16 = 101;
 pub const WM_SWITCH_PROFILE: u32 = WM_APP + 4;
 pub const WM_HOTKEYS_STATE_CHANGED: u32 = WM_APP + 12;
 pub const WM_TOGGLE_VISIBILITY: u32 = WM_APP + 13;
@@ -79,13 +83,23 @@ impl TrayIcon {
         nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
         nid.uCallbackMessage = WM_TRAYICON;
 
-        let icon_path = wide("icon.ico");
-        let custom_icon = unsafe { LoadImageW(std::ptr::null_mut(), icon_path.as_ptr(), IMAGE_ICON, 16, 16, LR_LOADFROMFILE) };
+        // The app icon embedded in the exe (assets/app.rc), at the tray's size for the current DPI. Not a loose
+        // icon.ico: the portable zip doesn't ship one, and a stale one left by EVE-Maj Preview shows its old logo.
+        let custom_icon = unsafe {
+            LoadImageW(
+                GetModuleHandleW(std::ptr::null()),
+                APP_ICON_RESOURCE as usize as *const u16,
+                IMAGE_ICON,
+                GetSystemMetrics(SM_CXSMICON),
+                GetSystemMetrics(SM_CYSMICON),
+                LR_DEFAULTCOLOR,
+            )
+        };
         let owns_icon = !custom_icon.is_null();
         if owns_icon {
             nid.hIcon = custom_icon;
         } else {
-            SLOG.warn(format_args!("Failed to load custom tray icon, using default"));
+            SLOG.warn(format_args!("Failed to load the app's tray icon, using default"));
             let icon = unsafe { LoadIconW(std::ptr::null_mut(), IDI_APPLICATION) };
             if icon.is_null() {
                 SLOG.err(format_args!("Failed to load application icon"));
